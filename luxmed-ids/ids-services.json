@@ -5,83 +5,23 @@
         "telemedicine": false
     },
     {
-        "id": 5788,
-        "name": "Alergolog",
+        "id": 12338,
+        "name": "Centrum Leczenia Infekcji",
         "telemedicine": false
     },
     {
-        "id": 13946,
-        "name": "Alergolog - konsultacja telefoniczna",
+        "id": 13974,
+        "name": "Centrum Leczenia Infekcji - konsultacja telefoniczna",
         "telemedicine": true
     },
     {
-        "id": 8423,
-        "name": "Angiolog",
+        "id": 14016,
+        "name": "Centrum Leczenia Infekcji - NFZ (POZ)",
         "telemedicine": false
     },
     {
-        "id": 4394,
-        "name": "Chirurg",
-        "telemedicine": false
-    },
-    {
-        "id": 4406,
-        "name": "Chirurg naczyniowy",
-        "telemedicine": false
-    },
-    {
-        "id": 13947,
-        "name": "Chirurg ogólny - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 11414,
-        "name": "Chirurg onkolog",
-        "telemedicine": false
-    },
-    {
-        "id": 5817,
-        "name": "Dermatolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13948,
-        "name": "Dermatolog - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 8277,
-        "name": "Diabetolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13949,
-        "name": "Dietetyk - konsultacja telefoniczna (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 8273,
-        "name": "Dietetyk (kolejna wizyta)",
-        "telemedicine": false
-    },
-    {
-        "id": 13668,
-        "name": "Dietetyk (wizyta pierwszorazowa)",
-        "telemedicine": false
-    },
-    {
-        "id": 13950,
-        "name": "Dietetyka - konsultacja telefoniczna (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 7669,
-        "name": "Endokrynolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13951,
-        "name": "Endokrynolog - konsultacja telefoniczna",
+        "id": 15964,
+        "name": "Centrum Leczenia Infekcji - NFZ (POZ) - konsultacja telefoniczna",
         "telemedicine": true
     },
     {
@@ -90,8 +30,18 @@
         "telemedicine": true
     },
     {
+        "id": 14296,
+        "name": "Fizjoterapeuta - Poradnia Bólu Pleców",
+        "telemedicine": false
+    },
+    {
         "id": 8294,
         "name": "Fizjoterapeuta (konsultacja)",
+        "telemedicine": false
+    },
+    {
+        "id": 15801,
+        "name": "Fizjoterapia proktologiczna",
         "telemedicine": false
     },
     {
@@ -105,79 +55,534 @@
         "telemedicine": false
     },
     {
+        "id": 15800,
+        "name": "Fizjoterapia urologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 4387,
+        "name": "Konsultacja alergologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13764,
+        "name": "Konsultacja alergologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 8423,
+        "name": "Konsultacja angiologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 4406,
+        "name": "Konsultacja chirurga naczyniowego",
+        "telemedicine": false
+    },
+    {
+        "id": 4418,
+        "name": "Konsultacja chirurga onkologa",
+        "telemedicine": false
+    },
+    {
+        "id": 4424,
+        "name": "Konsultacja chirurga plastyka",
+        "telemedicine": false
+    },
+    {
+        "id": 4412,
+        "name": "Konsultacja chirurgiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 4448,
+        "name": "Konsultacja dermatologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13766,
+        "name": "Konsultacja dermatologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4453,
+        "name": "Konsultacja diabetologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13767,
+        "name": "Konsultacja diabetologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 13768,
+        "name": "Konsultacja dietetyczna - telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13857,
+        "name": "Konsultacja dietetyczna - telefoniczna (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 5844,
+        "name": "Konsultacja dietetyczna (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 11881,
+        "name": "Konsultacja dietetyczna (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 4461,
+        "name": "Konsultacja endokrynologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13769,
+        "name": "Konsultacja endokrynologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
         "id": 6748,
-        "name": "Flebolog",
+        "name": "Konsultacja flebologiczna",
         "telemedicine": false
     },
     {
-        "id": 7675,
-        "name": "Gastroenterolog (Gastrolog)",
+        "id": 4468,
+        "name": "Konsultacja gastroenterologiczna (gastrologiczna)",
         "telemedicine": false
     },
     {
-        "id": 13952,
-        "name": "Gastroenterolog (Gastrolog) - konsultacja telefoniczna",
+        "id": 13770,
+        "name": "Konsultacja gastroenterologiczna (gastrologiczna) - telefoniczna",
         "telemedicine": true
     },
     {
-        "id": 13953,
-        "name": "Ginekolog - konsultacja telefoniczna",
+        "id": 12520,
+        "name": "Konsultacja genetyczna",
+        "telemedicine": false
+    },
+    {
+        "id": 15952,
+        "name": "Konsultacja genetyczna - telefoniczna",
         "telemedicine": true
     },
     {
-        "id": 7676,
-        "name": "Ginekolog dzieci",
+        "id": 8286,
+        "name": "Konsultacja geriatryczna",
         "telemedicine": false
     },
     {
-        "id": 7223,
-        "name": "Hematolog ",
+        "id": 4480,
+        "name": "Konsultacja ginekologiczna",
         "telemedicine": false
     },
     {
-        "id": 14188,
-        "name": "Hematolog - konsultacja telefoniczna",
+        "id": 13791,
+        "name": "Konsultacja ginekologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 14739,
+        "name": "Konsultacja ginekologiczna (bez opcji USG)",
+        "telemedicine": false
+    },
+    {
+        "id": 4473,
+        "name": "Konsultacja ginekologiczno endokrynologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13795,
+        "name": "Konsultacja ginekologiczno endokrynologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 9500,
+        "name": "Konsultacja ginekologiczno onkologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 4486,
+        "name": "Konsultacja hematologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13772,
+        "name": "Konsultacja hematologiczna - telefoniczna",
         "telemedicine": true
     },
     {
         "id": 4491,
-        "name": "Hepatolog",
+        "name": "Konsultacja hepatologiczna",
         "telemedicine": false
     },
     {
         "id": 13773,
-        "name": "Hepatolog - konsultacja telefoniczna",
+        "name": "Konsultacja hepatologiczna - telefoniczna",
         "telemedicine": true
     },
     {
         "id": 8006,
-        "name": "Hipertensjolog",
+        "name": "Konsultacja hipertensjologiczna",
         "telemedicine": false
     },
     {
         "id": 13833,
-        "name": "Hipertensjolog - konsultacja telefoniczna",
+        "name": "Konsultacja hipertensjologiczna - telefoniczna",
         "telemedicine": true
     },
     {
-        "id": 12601,
-        "name": "Immunolog",
+        "id": 7138,
+        "name": "Konsultacja immunologiczna",
         "telemedicine": false
     },
     {
-        "id": 13954,
-        "name": "Immunolog - konsultacja telefoniczna",
+        "id": 13774,
+        "name": "Konsultacja immunologiczna - telefoniczna",
         "telemedicine": true
     },
     {
-        "id": 7318,
-        "name": "Kardiolog",
+        "id": 4502,
+        "name": "Konsultacja internistyczna",
         "telemedicine": false
     },
     {
-        "id": 13955,
-        "name": "Kardiolog - konsultacja telefoniczna",
+        "id": 14585,
+        "name": "Konsultacja internistyczna - DPD",
+        "telemedicine": false
+    },
+    {
+        "id": 9242,
+        "name": "Konsultacja internistyczna - NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 13410,
+        "name": "Konsultacja internistyczna - telefoniczna",
         "telemedicine": true
+    },
+    {
+        "id": 13738,
+        "name": "Konsultacja internistyczna - telefoniczna NFZ (POZ)",
+        "telemedicine": true
+    },
+    {
+        "id": 16471,
+        "name": "Konsultacja internistyczna z analizą zdjęć zmian skórnych - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4510,
+        "name": "Konsultacja kardiologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13775,
+        "name": "Konsultacja kardiologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4522,
+        "name": "Konsultacja laryngologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13794,
+        "name": "Konsultacja laryngologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 13802,
+        "name": "Konsultacja logopedyczna - telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13858,
+        "name": "Konsultacja logopedyczna - telefoniczna (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 16283,
+        "name": "Konsultacja logopedyczna - wideo (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 16282,
+        "name": "Konsultacja logopedyczna - wideo (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 5870,
+        "name": "Konsultacja logopedyczna (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 4532,
+        "name": "Konsultacja logopedyczna (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 4534,
+        "name": "Konsultacja nefrologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13778,
+        "name": "Konsultacja nefrologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4540,
+        "name": "Konsultacja neurochirurgiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13805,
+        "name": "Konsultacja neurochirurgiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4549,
+        "name": "Konsultacja neurologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13779,
+        "name": "Konsultacja neurologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4565,
+        "name": "Konsultacja okulistyczna  - bez badania dna oka",
+        "telemedicine": false
+    },
+    {
+        "id": 13793,
+        "name": "Konsultacja okulistyczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 7756,
+        "name": "Konsultacja okulistyczna z badaniem dna oka",
+        "telemedicine": false
+    },
+    {
+        "id": 4572,
+        "name": "Konsultacja onkologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13781,
+        "name": "Konsultacja onkologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4436,
+        "name": "Konsultacja ortopedyczna",
+        "telemedicine": false
+    },
+    {
+        "id": 8341,
+        "name": "Konsultacja ortopedyczna - lekarz dyżurny",
+        "telemedicine": false
+    },
+    {
+        "id": 13397,
+        "name": "Konsultacja ortopedyczna - uraz",
+        "telemedicine": false
+    },
+    {
+        "id": 14568,
+        "name": "Konsultacja pielęgniarska - Centrum Leczenia Infekcji",
+        "telemedicine": false
+    },
+    {
+        "id": 14483,
+        "name": "Konsultacja pielęgniarska - dermatologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13215,
+        "name": "Konsultacja pielęgniarska - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 11356,
+        "name": "Konsultacja podologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 4430,
+        "name": "Konsultacja proktologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 14112,
+        "name": "Konsultacja psychiatryczna - telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13981,
+        "name": "Konsultacja psychiatryczna - wideo (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13982,
+        "name": "Konsultacja psychiatryczna - wideo (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 4585,
+        "name": "Konsultacja psychiatryczna (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 9158,
+        "name": "Konsultacja psychiatryczna (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 13694,
+        "name": "Konsultacja psychologiczna - telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13806,
+        "name": "Konsultacja psychologiczna - telefoniczna (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 13986,
+        "name": "Konsultacja psychologiczna - wideo (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 13985,
+        "name": "Konsultacja psychologiczna - wideo (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 4596,
+        "name": "Konsultacja psychologiczna (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 9160,
+        "name": "Konsultacja psychologiczna (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 4598,
+        "name": "Konsultacja pulmonologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13783,
+        "name": "Konsultacja pulmonologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 4604,
+        "name": "Konsultacja reumatologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13784,
+        "name": "Konsultacja reumatologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 15703,
+        "name": "Konsultacja seksuologiczna - lekarz (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 15702,
+        "name": "Konsultacja seksuologiczna - lekarz (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 15701,
+        "name": "Konsultacja seksuologiczna - lekarz telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 15700,
+        "name": "Konsultacja seksuologiczna - lekarz telefoniczna (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 15699,
+        "name": "Konsultacja seksuologiczna - lekarz wideo (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 15698,
+        "name": "Konsultacja seksuologiczna - lekarz wideo (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 15695,
+        "name": "Konsultacja seksuologiczno psychologiczna - telefoniczna (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 15694,
+        "name": "Konsultacja seksuologiczno psychologiczna - telefoniczna (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 15697,
+        "name": "Konsultacja seksuologiczno psychologiczna - wideo (kolejna wizyta)",
+        "telemedicine": true
+    },
+    {
+        "id": 15696,
+        "name": "Konsultacja seksuologiczno psychologiczna - wideo (wizyta pierwszorazowa)",
+        "telemedicine": true
+    },
+    {
+        "id": 15692,
+        "name": "Konsultacja seksuologiczno psychologiczna (kolejna wizyta)",
+        "telemedicine": false
+    },
+    {
+        "id": 15693,
+        "name": "Konsultacja seksuologiczno psychologiczna (wizyta pierwszorazowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 4614,
+        "name": "Konsultacja urologiczna",
+        "telemedicine": false
+    },
+    {
+        "id": 13786,
+        "name": "Konsultacja urologiczna - telefoniczna",
+        "telemedicine": true
+    },
+    {
+        "id": 14048,
+        "name": "Kwalifikacja do szczepienia - p/grypie (szczepionka własna Pacjenta) - NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 6100,
+        "name": "Kwalifikacja do szczepienia (inne niż p/grypie)",
+        "telemedicine": false
+    },
+    {
+        "id": 9244,
+        "name": "Kwalifikacja do szczepienia (inne niż p/grypie) - NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 7289,
+        "name": "Kwalifikacja do szczepienia p/grypie",
+        "telemedicine": false
     },
     {
         "id": 15296,
@@ -205,14 +610,19 @@
         "telemedicine": false
     },
     {
-        "id": 5854,
-        "name": "Laryngolog",
+        "id": 14345,
+        "name": "Kwalifikacja i wykonanie szczepienia p/grypie (INFLUVAC)",
         "telemedicine": false
     },
     {
-        "id": 13956,
-        "name": "Laryngolog - konsultacja telefoniczna",
-        "telemedicine": true
+        "id": 14564,
+        "name": "Kwalifikacja i wykonanie szczepienia p/grypie (preparat własny Pacjenta) NFZ",
+        "telemedicine": false
+    },
+    {
+        "id": 14344,
+        "name": "Kwalifikacja i wykonanie szczepienia p/grypie (VAXIGRIP)",
+        "telemedicine": false
     },
     {
         "id": 4498,
@@ -220,34 +630,9 @@
         "telemedicine": false
     },
     {
-        "id": 13802,
-        "name": "Logopeda - konsultacja telefoniczna (kolejna wizyta)",
+        "id": 13776,
+        "name": "Lekarz chorób zakaźnych - konsultacja telefoniczna",
         "telemedicine": true
-    },
-    {
-        "id": 13858,
-        "name": "Logopeda - konsultacja telefoniczna (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 14004,
-        "name": "Logopeda - konsultacja wideo (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 14005,
-        "name": "Logopeda - konsultacja wideo (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 5870,
-        "name": "Logopeda (kolejna wizyta)",
-        "telemedicine": false
-    },
-    {
-        "id": 4532,
-        "name": "Logopeda (wizyta pierwszorazowa)",
-        "telemedicine": false
     },
     {
         "id": 6799,
@@ -255,64 +640,14 @@
         "telemedicine": false
     },
     {
-        "id": 11785,
+        "id": 9708,
         "name": "Medycyna podróży",
         "telemedicine": false
     },
     {
-        "id": 11784,
+        "id": 9709,
         "name": "Medycyna podróży - kontynuacja szczepienia",
         "telemedicine": false
-    },
-    {
-        "id": 8008,
-        "name": "Nefrolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13959,
-        "name": "Nefrolog - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 8274,
-        "name": "Neurochirurg",
-        "telemedicine": false
-    },
-    {
-        "id": 7056,
-        "name": "Neurolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13960,
-        "name": "Neurolog - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 7681,
-        "name": "Okulista",
-        "telemedicine": false
-    },
-    {
-        "id": 7756,
-        "name": "Okulista - badanie dna oka",
-        "telemedicine": false
-    },
-    {
-        "id": 13963,
-        "name": "Okulista - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 8275,
-        "name": "Onkolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13961,
-        "name": "Onkolog - konsultacja telefoniczna",
-        "telemedicine": true
     },
     {
         "id": 12574,
@@ -320,188 +655,8 @@
         "telemedicine": false
     },
     {
-        "id": 7678,
-        "name": "Ortopeda",
-        "telemedicine": false
-    },
-    {
-        "id": 13962,
-        "name": "Ortopeda - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 8341,
-        "name": "Ortopeda - lekarz dyżurny",
-        "telemedicine": false
-    },
-    {
-        "id": 13398,
-        "name": "Ortopeda - uraz",
-        "telemedicine": false
-    },
-    {
-        "id": 7409,
-        "name": "Pediatra - gabinet dzieci chorych",
-        "telemedicine": false
-    },
-    {
-        "id": 13964,
-        "name": "Pediatra - gabinet dzieci chorych - konsultacja telefoniczna ",
-        "telemedicine": true
-    },
-    {
-        "id": 9245,
-        "name": "Pediatra - gabinet dzieci chorych NFZ (POZ)",
-        "telemedicine": false
-    },
-    {
-        "id": 7408,
-        "name": "Pediatra - gabinet dzieci zdrowych",
-        "telemedicine": false
-    },
-    {
-        "id": 10135,
-        "name": "Pediatra - gabinet dzieci zdrowych -  bilans NFZ (POZ)",
-        "telemedicine": false
-    },
-    {
-        "id": 9190,
-        "name": "Pediatra - gabinet dzieci zdrowych - bilans",
-        "telemedicine": false
-    },
-    {
-        "id": 14006,
-        "name": "Pediatra - gabinet dzieci zdrowych - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 14057,
-        "name": "Pediatra - gabinet dzieci zdrowych - kwalifikacja do szczepienia (inne niż p/grypie)",
-        "telemedicine": false
-    },
-    {
-        "id": 14055,
-        "name": "Pediatra - gabinet dzieci zdrowych - kwalifikacja do szczepienia p/grypie",
-        "telemedicine": false
-    },
-    {
-        "id": 9246,
-        "name": "Pediatra - gabinet dzieci zdrowych NFZ (POZ)",
-        "telemedicine": false
-    },
-    {
-        "id": 14058,
-        "name": "Pediatra - gabinet dzieci zdrowych szczepienia ( inne niż p/grypie) NFZ (POZ)",
-        "telemedicine": false
-    },
-    {
-        "id": 14060,
-        "name": "Pediatra - gabinet dzieci zdrowych szczepienia p/grypie (szczepionka własna Pacjenta) NFZ (POZ)",
-        "telemedicine": false
-    },
-    {
-        "id": 13740,
-        "name": "Pediatra - konsultacja telefoniczna NFZ (POZ)",
-        "telemedicine": true
-    },
-    {
-        "id": 13215,
-        "name": "Pielęgniarka - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 14483,
-        "name": "Pielęgniarka dermatologiczna",
-        "telemedicine": false
-    },
-    {
-        "id": 14297,
-        "name": "Porada pielęgniarki - ankieta poinfekcyjna",
-        "telemedicine": false
-    },
-    {
         "id": 14280,
         "name": "Psychiatra - konsultacja telefoniczna - porada receptowa",
-        "telemedicine": true
-    },
-    {
-        "id": 14114,
-        "name": "Psychiatra - konsultacja telefoniczna (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 13980,
-        "name": "Psychiatra - konsultacja wideo (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 13979,
-        "name": "Psychiatra - konsultacja wideo (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 6749,
-        "name": "Psychiatra (kolejna wizyta)",
-        "telemedicine": false
-    },
-    {
-        "id": 9157,
-        "name": "Psychiatra (wizyta pierwszorazowa)",
-        "telemedicine": false
-    },
-    {
-        "id": 13966,
-        "name": "Psycholog - konsultacja telefoniczna (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 13967,
-        "name": "Psycholog - konsultacja telefoniczna (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 13988,
-        "name": "Psycholog - konsultacja wideo (kolejna wizyta)",
-        "telemedicine": true
-    },
-    {
-        "id": 13987,
-        "name": "Psycholog - konsultacja wideo (wizyta pierwszorazowa)",
-        "telemedicine": true
-    },
-    {
-        "id": 7685,
-        "name": "Psycholog (kolejna wizyta)",
-        "telemedicine": false
-    },
-    {
-        "id": 9159,
-        "name": "Psycholog (wizyta pierwszorazowa)",
-        "telemedicine": false
-    },
-    {
-        "id": 7687,
-        "name": "Pulmonolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13968,
-        "name": "Pulmonolog - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 7688,
-        "name": "Reumatolog",
-        "telemedicine": false
-    },
-    {
-        "id": 13969,
-        "name": "Reumatolog - konsultacja telefoniczna",
-        "telemedicine": true
-    },
-    {
-        "id": 13800,
-        "name": "Stomatolog - konsultacja telefoniczna",
         "telemedicine": true
     },
     {
@@ -516,23 +671,58 @@
     },
     {
         "id": 6817,
-        "name": "Higienistka stomatologiczna",
+        "name": "Higiena stomatologiczna",
         "telemedicine": false
     },
     {
-        "id": 8914,
+        "id": 8903,
+        "name": "Implantolog",
+        "telemedicine": false
+    },
+    {
+        "id": 6904,
+        "name": "Ortodonta",
+        "telemedicine": false
+    },
+    {
+        "id": 8897,
+        "name": "Periodontolog",
+        "telemedicine": false
+    },
+    {
+        "id": 8901,
+        "name": "Protetyk",
+        "telemedicine": false
+    },
+    {
+        "id": 6621,
         "name": "Stomatolog",
         "telemedicine": false
     },
     {
-        "id": 6611,
-        "name": "Urolog",
+        "id": 13708,
+        "name": "Stomatolog – Invisalign (leczenie nakładkowe)",
         "telemedicine": false
     },
     {
-        "id": 13970,
-        "name": "Urolog - konsultacja telefoniczna",
+        "id": 13800,
+        "name": "Stomatolog - konsultacja telefoniczna",
         "telemedicine": true
+    },
+    {
+        "id": 11752,
+        "name": "Stomatolog - leczenie kanałowe - mikroskop",
+        "telemedicine": false
+    },
+    {
+        "id": 12270,
+        "name": "Usługa kosmetyczna - konsultacja kosmetologa",
+        "telemedicine": false
+    },
+    {
+        "id": 16094,
+        "name": "Wizyta podsumowująca osoby dorosłej - w wieku 20-59 Moje zdrowie NFZ",
+        "telemedicine": false
     },
     {
         "id": 16,
@@ -647,11 +837,6 @@
     {
         "id": 12795,
         "name": "Tomografia komputerowa - badanie dynamiczne stawów rzepkowo-udowych",
-        "telemedicine": false
-    },
-    {
-        "id": 8315,
-        "name": "Tomografia komputerowa - bronchografia",
         "telemedicine": false
     },
     {
@@ -965,8 +1150,23 @@
         "telemedicine": false
     },
     {
-        "id": 7955,
+        "id": 4359,
         "name": "Echo serca (USG serca)",
+        "telemedicine": false
+    },
+    {
+        "id": 16276,
+        "name": "Rtg pięty boczne - lewej",
+        "telemedicine": false
+    },
+    {
+        "id": 16277,
+        "name": "Rtg pięty boczne - obu",
+        "telemedicine": false
+    },
+    {
+        "id": 16275,
+        "name": "Rtg pięty boczne - prawej",
         "telemedicine": false
     },
     {
@@ -1065,8 +1265,8 @@
         "telemedicine": false
     },
     {
-        "id": 6184,
-        "name": "USG przezciemiączkowe",
+        "id": 7964,
+        "name": "USG prostaty przez powłoki brzuszne",
         "telemedicine": false
     },
     {
@@ -1075,7 +1275,7 @@
         "telemedicine": false
     },
     {
-        "id": 13638,
+        "id": 4353,
         "name": "USG stawów biodrowych",
         "telemedicine": false
     },
@@ -1115,6 +1315,11 @@
         "telemedicine": false
     },
     {
+        "id": 12725,
+        "name": "USG śródstopia",
+        "telemedicine": false
+    },
+    {
         "id": 4360,
         "name": "USG tarczycy",
         "telemedicine": false
@@ -1125,8 +1330,18 @@
         "telemedicine": false
     },
     {
+        "id": 6185,
+        "name": "USG transrektalne prostaty (TRUS)",
+        "telemedicine": false
+    },
+    {
         "id": 4368,
         "name": "USG układu moczowego",
+        "telemedicine": false
+    },
+    {
+        "id": 6182,
+        "name": "USG układu moczowego - i TRUS (transrektalne)",
         "telemedicine": false
     },
     {
@@ -1232,6 +1447,16 @@
     {
         "id": 8098,
         "name": "Densytometria - skład ciała pomiar - zawartość tkanki tłuszczowej, beztłuszczowej",
+        "telemedicine": false
+    },
+    {
+        "id": 8097,
+        "name": "Densytometria - szyjka kości udowej (ocena kości korowej) - screening",
+        "telemedicine": false
+    },
+    {
+        "id": 4300,
+        "name": "Mammografia",
         "telemedicine": false
     },
     {
@@ -1512,11 +1737,6 @@
     {
         "id": 8878,
         "name": "Rtg krtani",
-        "telemedicine": false
-    },
-    {
-        "id": 8880,
-        "name": "Rtg krtani - tomogram",
         "telemedicine": false
     },
     {
@@ -1850,13 +2070,28 @@
         "telemedicine": false
     },
     {
+        "id": 13043,
+        "name": "Rtg stopy AP + bok/skos - lewej na stojąco",
+        "telemedicine": false
+    },
+    {
         "id": 6146,
         "name": "Rtg stopy AP + bok/skos - obu",
         "telemedicine": false
     },
     {
+        "id": 13041,
+        "name": "Rtg stopy AP + bok/skos - obu na stojąco",
+        "telemedicine": false
+    },
+    {
         "id": 4343,
         "name": "Rtg stopy AP + bok/skos - prawej",
+        "telemedicine": false
+    },
+    {
+        "id": 13042,
+        "name": "Rtg stopy AP + bok/skos - prawej na stojąco",
         "telemedicine": false
     },
     {
@@ -2225,16 +2460,6 @@
         "telemedicine": false
     },
     {
-        "id": 10193,
-        "name": "Rezonans magnetyczny - serca z ilościową oceną funkcji skurczowej i żywotności + perfuzja",
-        "telemedicine": false
-    },
-    {
-        "id": 7704,
-        "name": "Rezonans magnetyczny - serca z ilościową oceną przepływu krwi",
-        "telemedicine": false
-    },
-    {
         "id": 12798,
         "name": "Rezonans magnetyczny - spektroskopia",
         "telemedicine": false
@@ -2375,13 +2600,88 @@
         "telemedicine": false
     },
     {
-        "id": 6301,
+        "id": 14685,
+        "name": "Badanie Angio OCT - dwoje oczu",
+        "telemedicine": false
+    },
+    {
+        "id": 16080,
+        "name": "Badanie Angio OCT - jedno oko",
+        "telemedicine": false
+    },
+    {
+        "id": 6597,
         "name": "Badanie EEG",
         "telemedicine": false
     },
     {
-        "id": 8937,
-        "name": "Badanie EKG - spoczynkowe",
+        "id": 12856,
+        "name": "Badanie OCT - badanie kąta przesączenia - dwoje oczu",
+        "telemedicine": false
+    },
+    {
+        "id": 13038,
+        "name": "Badanie OCT - badanie plamek żółtych",
+        "telemedicine": false
+    },
+    {
+        "id": 8918,
+        "name": "Badanie OCT plamki żółtej - dwoje oczu",
+        "telemedicine": false
+    },
+    {
+        "id": 8917,
+        "name": "Badanie OCT plamki żółtej - jedno oko",
+        "telemedicine": false
+    },
+    {
+        "id": 12857,
+        "name": "Badanie OCT tarczy nerwu II - Tomografia optyczna nerwu wzrokowego RNFL",
+        "telemedicine": false
+    },
+    {
+        "id": 14438,
+        "name": "COVID-19 Szybki wymaz",
+        "telemedicine": false
+    },
+    {
+        "id": 6298,
+        "name": "Cytologia szyjki macicy",
+        "telemedicine": false
+    },
+    {
+        "id": 14317,
+        "name": "Cytologia szyjki macicy - na podłożu płynnym LBC (cienkowarstwowa)",
+        "telemedicine": false
+    },
+    {
+        "id": 4695,
+        "name": "EKG spoczynkowe",
+        "telemedicine": false
+    },
+    {
+        "id": 14444,
+        "name": "Elastografia (ocena zwłóknienia i stłuszczenia wątroby)",
+        "telemedicine": false
+    },
+    {
+        "id": 11832,
+        "name": "Endoskopia laryngologiczna - Wideofiberoskopia górnych dróg oddechowych",
+        "telemedicine": false
+    },
+    {
+        "id": 7323,
+        "name": "Endoskopia laryngologiczna - Wideofiberoskopia nosa i zatok",
+        "telemedicine": false
+    },
+    {
+        "id": 3808,
+        "name": "Gastroskopia",
+        "telemedicine": false
+    },
+    {
+        "id": 13703,
+        "name": "Genetyczne przesiewowe badanie prenatalne - test Sanco całogenomowy",
         "telemedicine": false
     },
     {
@@ -2395,28 +2695,53 @@
         "telemedicine": false
     },
     {
+        "id": 3816,
+        "name": "Kolonoskopia",
+        "telemedicine": false
+    },
+    {
         "id": 4780,
         "name": "Komputerowe pole widzenia",
         "telemedicine": false
     },
     {
-        "id": 9202,
-        "name": "Pobranie krwi - i innych materiałów dzieci chore",
+        "id": 16474,
+        "name": "Konsultacja internistyczna z analizą zdjęć zmian skórnych",
         "telemedicine": false
     },
     {
-        "id": 14292,
-        "name": "Pobranie krwi - i innych materiałów dzieci chore - NFZ (POZ)",
+        "id": 6677,
+        "name": "Konsultacja laktacyjna - dla ciężarnych",
         "telemedicine": false
     },
     {
-        "id": 9201,
-        "name": "Pobranie krwi - i innych materiałów dzieci zdrowe",
+        "id": 16435,
+        "name": "Konsultacja urologiczna - z opcją USG",
         "telemedicine": false
     },
     {
-        "id": 14293,
-        "name": "Pobranie krwi - i innych materiałów dzieci zdrowe - NFZ (POZ)",
+        "id": 8999,
+        "name": "Pobranie krwi - i innych materiałów - na czczo",
+        "telemedicine": false
+    },
+    {
+        "id": 16092,
+        "name": "Pobranie krwi - i innych materiałów - na czczo Moje zdrowie NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 14013,
+        "name": "Pobranie krwi - i innych materiałów - na czczo NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 14266,
+        "name": "Pobranie krwi - i innych materiałów - nie na czczo",
+        "telemedicine": false
+    },
+    {
+        "id": 14309,
+        "name": "Pobranie krwi - i innych materiałów - nie na czczo NFZ (POZ)",
         "telemedicine": false
     },
     {
@@ -2425,13 +2750,33 @@
         "telemedicine": false
     },
     {
-        "id": 14395,
+        "id": 12356,
+        "name": "Poligrafia - test Zaburzeń Snu",
+        "telemedicine": false
+    },
+    {
+        "id": 11695,
+        "name": "Położna - palpacyjne badanie piersi i nauka samobadania",
+        "telemedicine": false
+    },
+    {
+        "id": 14322,
         "name": "Pozostawienie materiału do badania (mocz/kał)",
         "telemedicine": false
     },
     {
-        "id": 14396,
+        "id": 14397,
         "name": "Pozostawienie materiału do badania (mocz/kał) - NFZ (POZ)",
+        "telemedicine": false
+    },
+    {
+        "id": 6273,
+        "name": "Próba wysiłkowa",
+        "telemedicine": false
+    },
+    {
+        "id": 6279,
+        "name": "Rektoskopia",
         "telemedicine": false
     },
     {
@@ -2450,8 +2795,48 @@
         "telemedicine": false
     },
     {
+        "id": 14668,
+        "name": "Stomatolog - leczenie zaburzeń narządu żucia",
+        "telemedicine": false
+    },
+    {
+        "id": 14116,
+        "name": "Test COVID -19 - antygenowy - wymaz z wynikiem w języku angielskim / niemieckim / polskim",
+        "telemedicine": false
+    },
+    {
         "id": 14099,
         "name": "Test COVID -19 - genetyczny met.  RT – PCR - wymaz",
+        "telemedicine": false
+    },
+    {
+        "id": 15961,
+        "name": "Tomografia optyczna nerwu wzrokowego RNFL (OCT Tarczy nerwu drugiego) +GCC",
+        "telemedicine": false
+    },
+    {
+        "id": 15683,
+        "name": "Tomografia optyczna nerwu wzrokowego RNFL (OCT tarczy nerwu II) - jedno oko",
+        "telemedicine": false
+    },
+    {
+        "id": 12710,
+        "name": "Wideodermatoskopia - mapa ciała z konsultacją dermatologiczną",
+        "telemedicine": false
+    },
+    {
+        "id": 12603,
+        "name": "Wideodermatoskopia zmian skórnych (barwnikowych) do 3 zmian",
+        "telemedicine": false
+    },
+    {
+        "id": 15877,
+        "name": "Wideodermatoskopia zmian skórnych (barwnikowych) od 4 do 10 zmian",
+        "telemedicine": false
+    },
+    {
+        "id": 15878,
+        "name": "Wideodermatoskopia zmian skórnych (barwnikowych) powyżej 10 zmian",
         "telemedicine": false
     },
     {
@@ -2505,13 +2890,13 @@
         "telemedicine": false
     },
     {
-        "id": 11832,
-        "name": "Endoskopia laryngologiczna - Wideofiberoskopia górnych dróg oddechowych",
+        "id": 17,
+        "name": "Inne usługi",
         "telemedicine": false
     },
     {
-        "id": 17,
-        "name": "Inne usługi",
+        "id": 5,
+        "name": "Medycyna Pracy",
         "telemedicine": false
     },
     {

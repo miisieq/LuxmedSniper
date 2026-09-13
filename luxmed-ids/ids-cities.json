@@ -4,10 +4,6 @@
         "name": "Białystok"
     },
     {
-        "id": 12,
-        "name": "Bielsk Podlaski"
-    },
-    {
         "id": 100,
         "name": "Bielsko-Biała"
     },
@@ -38,6 +34,10 @@
     {
         "id": 17,
         "name": "Katowice - Gliwice - Tychy"
+    },
+    {
+        "id": 32,
+        "name": "Kielce"
     },
     {
         "id": 85,
