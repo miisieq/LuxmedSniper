@@ -24,6 +24,20 @@ import yaml
 from loguru import logger
 from pydantic import BaseModel, Field, model_validator
 
+REQUEST_TIMEOUT = 30
+LOG_BODY_MAX_CHARS = 500
+
+BROWSER_HEADERS = {  # what the Patient Portal SPA sends
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "pl-PL,pl;q=0.9",
+    # Without this an expired session answers 200 with a 12 kB login page instead of 401.
+    "X-Requested-With": "XMLHttpRequest",
+}
+
 
 class DoctorLocator(BaseModel):
     id: str
@@ -123,11 +137,10 @@ class LuxMedSniper:
     DICTIONARY_FACILITIES_AND_DOCTORS = f'{DICTIONARY_URL}/facilitiesAndDoctors'
 
     def __init__(self, configuration_files: typing.Iterable[str] = tuple("luxmedSniper.yaml")):
-        logger.info("LuxMedSniper logger initialized")
+        logger.info("LuxMedSniper logger initialized")l
 
         self.config = LuxMedSniper._load_configuration(configuration_files)
         self.notification_providers = self._setup_providers()
-        self.session = requests.Session()
 
         self._log_in()
 
@@ -271,23 +284,81 @@ class LuxMedSniper:
             "login": luxmed.login,
             "password": luxmed.password,
         }
-        response = self.session.post(
-            url=LuxMedSniper.LUXMED_LOGIN_URL,
+        self.session = requests.Session()  # fresh one: _log_in runs again whenever the token lapses
+        self.session.headers.update(BROWSER_HEADERS)
+        response = self._request(
+            "POST",
+            LuxMedSniper.LUXMED_LOGIN_URL,
             json=json_data,
             headers={"Content-Type": "application/json"},
         )
-        logger.debug("Login response: {}.\nLogin cookies: {}", response.text, response.cookies)
         if response.status_code != requests.codes["ok"]:
             err_msg = f"Unexpected response {response.status_code}, cannot log in"
             raise LuxmedSniperError(err_msg)
 
         logger.info("Successfully logged in!")
-        self.session.cookies = response.cookies
-        for k, v in self.session.cookies.items():
-            self.session.headers.update({k: v})
 
-        token = json.loads(response.text)["token"]
-        self.session.headers["authorization-token"] = f"Bearer {token}"
+        # Cookies alone authenticate; the portal returns the token as the Authorization-Token
+        # cookie, so resending it as a header (as this script used to) is ignored by the server.
+        self.session.cookies = response.cookies
+
+    @staticmethod
+    def _log_http(response: requests.Response, *, redact_body: bool) -> None:
+        """One INFO line per request.
+
+        Never logs request bodies (POST /Account/LogIn carries the password) nor the login
+        response body (it carries the session token). Of the response headers only
+        Content-Type is logged, since Set-Cookie carries the session cookies.
+        """
+        if redact_body:
+            body = f"<skipped: {len(response.content)} B>"
+        else:
+            text = response.text
+            body = text[:LOG_BODY_MAX_CHARS].replace("\n", " ").replace("\r", " ")
+            if len(text) > LOG_BODY_MAX_CHARS:
+                body += f"... (+{len(text) - LOG_BODY_MAX_CHARS} chars)"
+
+        logger.info(
+            "HTTP {} {} -> {} | {} | {}",
+            response.request.method,
+            response.request.url or "",  # post-redirect URL, and the one carrying the query string
+            response.status_code,
+            response.headers.get("Content-Type", "-"),
+            body,
+        )
+
+    def _request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
+        response = self.session.request(method, url, timeout=REQUEST_TIMEOUT, **kwargs)
+        # Redact on the URL we asked for, never on response.request.url: the latter is the
+        # post-redirect one, so a 302 on the login endpoint would unmask the session token.
+        LuxMedSniper._log_http(response, redact_body=url.startswith(LuxMedSniper.LUXMED_LOGIN_URL))
+        return response
+
+    @staticmethod
+    def _is_session_expired(response: requests.Response) -> bool:
+        """With X-Requested-With (see BROWSER_HEADERS) a rejected session yields a plain 401,
+        which is the main path here. The non-JSON check stays as a fallback: without that
+        header the portal answers 200 with a login page, so detection keeps working should
+        the portal stop honouring it. Trade-off: any non-JSON reply (a 500 error page, say)
+        is reported as a rejected session too.
+        """
+        if response.status_code in (requests.codes["unauthorized"], requests.codes["forbidden"]):
+            return True
+        try:
+            response.json()
+        except ValueError:
+            return True
+        return False
+
+    def _get(self, url: str, **kwargs: Any) -> requests.Response:
+        """GET that fails loudly when the portal rejected the session, instead of letting a
+        login page reach the JSON parser. One login per cycle means the 10-minute token cannot
+        realistically lapse mid-cycle, so there is no retry here - the next cycle logs in anew."""
+        response = self._request("GET", url, **kwargs)
+        if LuxMedSniper._is_session_expired(response):
+            err_msg = f"Session rejected by the portal ({response.status_code})"
+            raise LuxmedSniperError(err_msg)
+        return response
 
     @staticmethod
     def _parse_visits_new_portal(data: requests.Response, doctor_locator_id: DoctorLocator) -> list[Appointment]:
@@ -342,14 +413,15 @@ class LuxMedSniper:
 
         logger.debug("Parameters: {}", params)
 
-        response = self.session.get(url=LuxMedSniper.NEW_PORTAL_RESERVATION_URL, params=params)
-        logger.debug(response.text)
-        return [
+        response = self._get(LuxMedSniper.NEW_PORTAL_RESERVATION_URL, params=params)
+        appointments = [
             *filter(
                 lambda appointment: appointment.AppointmentDate <= date_to,
                 LuxMedSniper._parse_visits_new_portal(response, doctor_locator),
             ),
         ]
+        logger.info("Found {} appointments for: {}", len(appointments), doctor_locator.name)
+        return appointments
 
     def _add_to_database(self, appointment: Appointment) -> None:
         path = Path(self.config["misc"]["notifydb"])
@@ -442,15 +514,15 @@ class LuxMedSniper:
                 logger.exception(f"Looking for appointments for {doctor_locator} failed, reason: {e}")
 
     def get_cities(self) -> list[dict]:
-        response = self.session.get(
-            url=LuxMedSniper.DICTIONARY_CITIES_URL,
+        response = self._get(
+            LuxMedSniper.DICTIONARY_CITIES_URL,
             headers={"Content-Type": "application/json"},
         )
         return response.json()
 
     def get_services(self) -> list[dict]:
-        response = self.session.get(
-            url=LuxMedSniper.DICTIONARY_SERVICES_URL,
+        response = self._get(
+            LuxMedSniper.DICTIONARY_SERVICES_URL,
             headers={"Content-Type": "application/json"},
         )
         return response.json()
@@ -460,10 +532,10 @@ class LuxMedSniper:
             'cityId': city_id,
             'serviceVariantId': service_variant_id
         }
-        response = self.session.get(
-            url=LuxMedSniper.DICTIONARY_FACILITIES_AND_DOCTORS,
-            params = params,
-            headers={"Content-Type": "application/json"}
+        response = self._get(
+            LuxMedSniper.DICTIONARY_FACILITIES_AND_DOCTORS,
+            params=params,
+            headers={"Content-Type": "application/json"},
         )
         return response.json()
 
@@ -497,7 +569,11 @@ def setup_logging() -> None:
 
     handlers = [
         dict(sink=sys.stdout, level=os.environ.get("LOGURU_LEVEL", "INFO")),
-        dict(sink="debug.log", format="{time} - {message}", serialize=True, rotation="1 week"),
+        dict(
+            # level: loguru defaults to DEBUG, which would log the whole config (password included).
+            sink="debug.log", level="INFO", format="{time} - {message}",
+            serialize=True, rotation="1 week", retention="1 month",
+        ),
     ]
     logger.configure(handlers=handlers)
 
@@ -547,10 +623,12 @@ def dump_current_ids(config, city_wildcard: str | None, dump_ids_doctors: bool) 
 
 def work(config: list[str]) -> None:
     try:
+        # Rebuilt every cycle: logging in once per cycle is unavoidable anyway (the portal's
+        # token lives 10 minutes), and this way config edits apply without a restart.
         luxmed_sniper = LuxMedSniper(config)
         luxmed_sniper.check()
-    except LuxmedSniperError as s:
-        logger.exception(s)
+    except Exception:  # schedule re-raises out of run_pending(), which would end the process
+        logger.exception("Cycle failed, retrying on the next run")
 
 
 if __name__ == "__main__":
