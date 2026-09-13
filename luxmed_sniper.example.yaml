@@ -1,0 +1,74 @@
+# Template. Copy it, then edit the copy - the copy is gitignored, this file is not:
+#   cp luxmed_sniper.example.yaml luxmed_sniper.yaml
+# luxmed_sniper.yaml is the default path, so afterwards `python3 luxmed_sniper.py`
+# needs no -c. Any number of files can be merged: -c user.yaml doctors.yaml
+
+luxmed:
+  login: LOGIN        # Patient Portal login (the deprecated `email:` key still works)
+  password: PASSWORD
+
+luxmedsniper:
+  # id format: cityId*serviceVariantId*facilitiesIds*doctorsIds, where -1 means any.
+  # Look ids up in luxmed-ids/ids-cities.json and luxmed-ids/ids-services.json, or
+  # regenerate them: python3 luxmed_sniper.py --dump-ids -c luxmed_sniper.yaml
+  # LuxMed does retire ids - a stale one returns no appointments and looks exactly
+  # like an empty schedule, so re-check them if a search never finds anything.
+  doctor_locators:
+    - id: 1*4502*-1*-1    # Warszawa, Konsultacja internistyczna, any clinic, any doctor
+      name: Internist
+      enabled: True
+    - id: 1*4565*-1*-1    # Warszawa, Konsultacja okulistyczna - bez badania dna oka
+      name: Ophthalmologist
+      enabled: False      # skip this search without deleting it
+  lookup_time_days: 14    # how many days ahead to search
+  facilities_ids: []      # extra facility ids appended to every locator
+  # console, console_async, pushover, ntfy, slack, pushbullet, telegram, gi, sound
+  # Several can run at once; one failing provider does not block the others.
+  notification_provider:
+    - console
+
+# Template fields: {AppointmentDate} {ClinicPublicName} {DoctorName} {clinic_id} {service_id}
+# {name} - the search name above - works ONLY in console and console_async; every other
+# provider formats against the appointment alone and raises KeyError on it.
+# {AppointmentDate} is a datetime, so it takes a format spec: {AppointmentDate:%Y-%m-%d %H:%M}
+console:
+  message_template: "{name} - {AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+
+console_async:
+  message_template: "{name} - {AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+
+# pushover and ntfy need nothing beyond requests; slack, pushbullet, telegram and gi
+# need their package from optional-requirements.txt.
+pushover:
+  user_key:   # your pushover.net user key
+  api_token:  # pushover.net app API token
+  message_template: "{AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+  title: "New Lux Med visit available!"
+
+ntfy:
+  # On public ntfy.sh the topic is the only secret - anyone who guesses it reads your
+  # appointments. Use a long random name, or your own instance.
+  topic:
+  message_template: "{AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+
+slack:
+  api_token:  # your slack application token
+  channel:    # notification channel
+  # Note: the slack provider formats with .format(vars(appointment)) - positional - so
+  # named placeholders raise KeyError. Keep the text static until that is fixed.
+  message_template: "New Lux Med visit available!"
+
+pushbullet:
+  access_token:  # your pushbullet access token
+  message_template: "{AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+  title: "New Lux Med visit available!"
+
+telegram:
+  tele_conf_path: telegram-luxmed-notifier.conf  # your telegram_send config file
+  message_template: "{AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
+
+# Linux-only providers, not shown above: `gi` needs gi.message_template (libnotify),
+# `sound` needs sound.audio pointing at a file for /usr/bin/aplay.
+
+misc:
+  notifydb: ./notifications.db  # state file recording which appointments were notified

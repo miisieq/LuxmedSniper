@@ -105,6 +105,7 @@ venv.bak/
 
 # local
 local-*.yaml
+local-*.yml
 .idea
 configs
 data
@@ -117,3 +118,7 @@ data
 # luxmed sniper specific files
 cities.json
 *.db
+
+# real configs - only luxmed_sniper.example.yaml belongs in the repo
+luxmed_sniper.yaml
+luxmed_*.yml
