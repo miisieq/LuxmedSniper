@@ -1,9 +1,23 @@
-version: '3'
-
 services:
-  luxmedsniper:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+  app:
+    build: .
     container_name: luxmedsniper
-    restart: always
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Warsaw
+      - LUXMED_INTERVAL=900
+    volumes:
+      - ./luxmed_sniper.yaml:/config/luxmed_sniper.yaml:ro
+      - data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    cpus: "0.5"
+
+volumes:
+  data:

@@ -83,6 +83,13 @@ class DoctorLocator(BaseModel):
         }
 
 
+class CheckResult(typing.NamedTuple):
+    """Outcome of one cycle. `enabled` separates "nothing to do" from "everything failed"."""
+
+    enabled: int
+    searched: int
+
+
 @dataclass
 class Appointment:
     AppointmentDate: datetime.datetime
@@ -165,9 +172,23 @@ class LuxMedSniper:
                 cf = yaml.safe_load(stream)
                 config = merge(config, cf)
 
-        logger.debug("Configuration: {}", config)
+        logger.debug("Configuration: {}", LuxMedSniper._redacted(config))
 
         return config
+
+    SECRET_KEYS = frozenset({"password", "api_token", "user_key", "access_token", "token"})
+
+    @staticmethod
+    def _redacted(config: dict[str, Any]) -> dict[str, Any]:
+        """Copy of the config with secrets masked, so LOGURU_LEVEL=DEBUG stays safe to turn on."""
+        return {
+            key: (
+                LuxMedSniper._redacted(value)
+                if isinstance(value, dict)
+                else "***" if key in LuxMedSniper.SECRET_KEYS and value else value
+            )
+            for key, value in config.items()
+        }
 
     @staticmethod
     def _format_message(message_template: str, doctor_locator: DoctorLocator, appointment_data: Appointment) -> str:
@@ -476,7 +497,14 @@ class LuxMedSniper:
             except Exception as e:
                 logger.exception(f"Sending notification failed, reason: {e}")
 
-    def check(self) -> None:
+    def check(self) -> CheckResult:
+        """Runs every enabled search, reporting how many ran and how many reached the portal.
+
+        Both counts drive the heartbeat: per-locator failures are swallowed below so one broken
+        search does not stop the others, which means "check() returned" says nothing about
+        whether anything worked.
+        """
+        enabled = searched = 0
         doctor_locator_dict: dict[str, Any]
         for doctor_locator_dict in self.config["luxmedsniper"]["doctor_locators"]:
             doctor_locator = DoctorLocator.model_validate(
@@ -487,8 +515,11 @@ class LuxMedSniper:
             if not doctor_locator.enabled:
                 logger.info(f"Appointments skipping: {doctor_locator.name}, disabled")
                 continue
+
+            enabled += 1
             try:
                 appointments = self._get_appointments_new_portal(doctor_locator)
+                searched += 1
                 if not appointments:
                     logger.info(f"No appointments found for: {doctor_locator.name}")
                     continue
@@ -512,6 +543,8 @@ class LuxMedSniper:
                         logger.info(f"Notification was already sent for: {doctor_locator.name}")
             except Exception as e:
                 logger.exception(f"Looking for appointments for {doctor_locator} failed, reason: {e}")
+
+        return CheckResult(enabled=enabled, searched=searched)
 
     def get_cities(self) -> list[dict]:
         response = self._get(
@@ -567,13 +600,10 @@ def setup_logging() -> None:
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
+    # stdout only: whatever runs the process persists it - docker logs, journald, a shell
+    # redirect. A second file sink would just duplicate this at the same level.
     handlers = [
         dict(sink=sys.stdout, level=os.environ.get("LOGURU_LEVEL", "INFO")),
-        dict(
-            # level: loguru defaults to DEBUG, which would log the whole config (password included).
-            sink="debug.log", level="INFO", format="{time} - {message}",
-            serialize=True, rotation="1 week", retention="1 month",
-        ),
     ]
     logger.configure(handlers=handlers)
 
@@ -621,14 +651,101 @@ def dump_current_ids(config, city_wildcard: str | None, dump_ids_doctors: bool) 
     json.dump(facilities_and_doctors, open('luxmed-ids/ids-facilities-doctors.json', 'w', encoding='utf-8'), indent=4, ensure_ascii=False)
 
 
-def work(config: list[str]) -> None:
+def add_critical_alert_sink(config: dict[str, Any]) -> None:
+    """Routes CRITICAL records to Pushover, when it is configured.
+
+    A loguru sink rather than a call in each failure path, so any future logger.critical reaches
+    the phone without extra plumbing. Notification providers cannot serve this: they are called
+    with an Appointment, and a dead login has none. loguru's own catch= keeps a broken alert
+    channel from taking the process down - the record still reaches stdout either way.
+    """
+    pushover = config.get("pushover") or {}
+    if not (pushover.get("user_key") and pushover.get("api_token")):
+        logger.info("Pushover not configured, CRITICAL records stay in the log only")
+        return
+
+    def sink(message: Any) -> None:
+        response = requests.post(
+            "https://api.pushover.net/1/messages.json",
+            data={
+                "token": pushover["api_token"],
+                "user": pushover["user_key"],
+                "title": "LUX MED Sniper alert!",
+                "message": message.record["message"],
+                "priority": 1,  # bypasses quiet hours - a dead sniper is worth waking up for
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+        # Below CRITICAL on purpose: a warning here cannot re-enter this sink.
+        if response.status_code != requests.codes["ok"]:
+            logger.warning("Pushover rejected the alert: {} {}", response.status_code, response.text)
+        else:
+            logger.info("Alert sent to Pushover")
+
+    logger.add(sink, level="CRITICAL")
+    logger.info("CRITICAL records will also be sent to Pushover")
+
+
+def write_heartbeat(delay: int) -> None:
+    """Records how long this cycle vouches for the process, for an external health check.
+
+    Opt-in through LUXMED_HEARTBEAT_FILE, so nothing appears outside a container. The file holds
+    a deadline rather than a timestamp: the checker then needs no knowledge of the interval.
+    """
+    path = os.environ.get("LUXMED_HEARTBEAT_FILE")
+    if path:
+        Path(path).write_text(str(int(time.time()) + delay * 3), encoding="utf-8")
+
+
+# Matches the health check's 3x window, so the CRITICAL line and the unhealthy flag appear
+# together rather than hours apart.
+FAILED_CYCLES_BEFORE_CRITICAL = 3
+
+_failed_cycles = 0
+
+
+def work(config: list[str], delay: int = 0) -> None:
+    global _failed_cycles  # noqa: PLW0603 - one counter, and schedule calls work() with fixed args
+
     try:
         # Rebuilt every cycle: logging in once per cycle is unavoidable anyway (the portal's
         # token lives 10 minutes), and this way config edits apply without a restart.
         luxmed_sniper = LuxMedSniper(config)
-        luxmed_sniper.check()
+        result = luxmed_sniper.check()
     except Exception:  # schedule re-raises out of run_pending(), which would end the process
         logger.exception("Cycle failed, retrying on the next run")
+        result = CheckResult(enabled=1, searched=0)  # login died before any locator ran
+
+    if not result.enabled:
+        # Every search is disabled on purpose. Nothing ran, but nothing is broken either, so
+        # this must not raise an alert claiming the account is locked.
+        logger.info("No locator is enabled, nothing to search")
+        _failed_cycles = 0
+        write_heartbeat(delay)
+        return
+
+    if result.searched:
+        if _failed_cycles:
+            logger.success("Recovered after {} failed cycle(s)", _failed_cycles)
+        _failed_cycles = 0
+        write_heartbeat(delay)
+        return
+
+    _failed_cycles += 1
+    if _failed_cycles < FAILED_CYCLES_BEFORE_CRITICAL:
+        logger.warning("No search reached the portal this cycle ({}. in a row)", _failed_cycles)
+    elif _failed_cycles == FAILED_CYCLES_BEFORE_CRITICAL:
+        # Exactly once per outage. CRITICAL is wired to Pushover, and an alert per cycle would
+        # be a flood rather than a signal - the health check already reports the ongoing state.
+        logger.critical(
+            "No search has reached the portal for ~{} min ({} cycles in a row). Check the "
+            "credentials, whether the account is locked, and the portal API. Sent once per "
+            "outage - the container keeps reporting itself unhealthy until searches succeed.",
+            (_failed_cycles - 1) * delay // 60,  # the first failure is one cycle back, not three
+            _failed_cycles,
+        )
+    else:
+        logger.warning("Still not reaching the portal ({}. cycle in a row)", _failed_cycles)
 
 
 if __name__ == "__main__":
@@ -642,7 +759,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-d", "--delay",
-        type=int, help="Delay in fetching updates [s]", default=1800
+        type=int, help="Delay in fetching updates [s]",
+        # Env var so a container can set it without a shell wrapper: an exec-form CMD expands
+        # nothing, and shell form would leave /bin/sh as PID 1 swallowing SIGTERM. `or` rather
+        # than a get() default because compose passes an unset variable through as "".
+        default=int(os.environ.get("LUXMED_INTERVAL") or 1800),
     )
     group = parser.add_argument_group('dump-ids')
     group.add_argument(
@@ -659,13 +780,25 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Fail fast on a config that is not a readable file. A missing bind mount source makes Docker
+    # create a directory in its place, and without this the process would log IsADirectoryError
+    # every cycle forever while still reporting itself as running.
+    for configuration_file in args.config:
+        if not Path(configuration_file).expanduser().is_file():
+            logger.error("Not a readable configuration file: {}", configuration_file)
+            sys.exit(1)
+
     if args.dump_ids is True:
         logger.info(f'Dumping IDs')
         dump_current_ids(args.config, args.dump_ids_city, args.dump_ids_doctors)
     else:
+        # Loaded once here purely to wire up alerting; work() reloads it every cycle, which is
+        # what keeps config edits live. A config that cannot be parsed stops us right here.
+        add_critical_alert_sink(LuxMedSniper._load_configuration(args.config))  # noqa: SLF001
+
         logger.info(f'Start working every: {args.delay} s')
-        work(args.config)
-        schedule.every(args.delay).seconds.do(work, args.config)
+        work(args.config, args.delay)
+        schedule.every(args.delay).seconds.do(work, args.config, args.delay)
         try:
             while True:
                 schedule.run_pending()

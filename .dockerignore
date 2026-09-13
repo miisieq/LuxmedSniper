@@ -1,0 +1,21 @@
+# Keep the build context small and make sure credentials and state can never reach a layer,
+# even if COPY is widened later.
+.git
+.venv
+venv
+__pycache__
+
+# Real configs live on the host and are bind-mounted at runtime.
+*.yaml
+*.yml
+!luxmed_sniper.example.yaml
+
+# Runtime state and logs.
+*.db
+*.log
+
+# Lookup tables for humans, not used at runtime.
+luxmed-ids
+
+.DS_Store
+.idea
