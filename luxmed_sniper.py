@@ -136,8 +136,8 @@ class LuxMedSniper:
     DICTIONARY_SERVICES_URL = f'{DICTIONARY_URL}/serviceVariantsGroups'
     DICTIONARY_FACILITIES_AND_DOCTORS = f'{DICTIONARY_URL}/facilitiesAndDoctors'
 
-    def __init__(self, configuration_files: typing.Iterable[str] = tuple("luxmedSniper.yaml")):
-        logger.info("LuxMedSniper logger initialized")l
+    def __init__(self, configuration_files: typing.Iterable[str]):  # default lives in argparse
+        logger.info("LuxMedSniper logger initialized")
 
         self.config = LuxMedSniper._load_configuration(configuration_files)
         self.notification_providers = self._setup_providers()
