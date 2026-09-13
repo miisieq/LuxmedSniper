@@ -116,3 +116,4 @@ data
 
 # luxmed sniper specific files
 cities.json
+*.db
