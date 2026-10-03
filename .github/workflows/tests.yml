@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.12 matches the Dockerfile; 3.13 catches breakage before the image moves up.
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # optional-requirements.txt is deliberately left out: the tests exercise the console
+      # provider only, and PyGObject needs GTK headers that a test runner has no reason to carry.
+      - run: pip install -r requirements.txt -r dev-requirements.txt
+
+      - run: pytest -q

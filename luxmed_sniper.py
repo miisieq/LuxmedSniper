@@ -14,6 +14,7 @@ import uuid
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from fnmatch import fnmatch
+from http import HTTPStatus
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -88,6 +89,7 @@ class CheckResult(typing.NamedTuple):
 
     enabled: int
     searched: int
+    last_error: str = ""  # most recent failure, so the alert can name what is actually wrong
 
 
 @dataclass
@@ -315,7 +317,7 @@ class LuxMedSniper:
         )
         if response.status_code != requests.codes["ok"]:
             err_msg = f"Unexpected response {response.status_code}, cannot log in"
-            raise LuxmedSniperError(err_msg)
+            raise LuxmedSniperError(err_msg, response.status_code)
 
         logger.info("Successfully logged in!")
 
@@ -352,7 +354,10 @@ class LuxMedSniper:
         response = self.session.request(method, url, timeout=REQUEST_TIMEOUT, **kwargs)
         # Redact on the URL we asked for, never on response.request.url: the latter is the
         # post-redirect one, so a 302 on the login endpoint would unmask the session token.
-        LuxMedSniper._log_http(response, redact_body=url.startswith(LuxMedSniper.LUXMED_LOGIN_URL))
+        # Only a successful login carries a token, so a failed one stays readable - that body is
+        # what tells a maintenance window apart from a WAF block.
+        redact = url.startswith(LuxMedSniper.LUXMED_LOGIN_URL) and response.status_code == requests.codes["ok"]
+        LuxMedSniper._log_http(response, redact_body=redact)
         return response
 
     @staticmethod
@@ -378,7 +383,7 @@ class LuxMedSniper:
         response = self._request("GET", url, **kwargs)
         if LuxMedSniper._is_session_expired(response):
             err_msg = f"Session rejected by the portal ({response.status_code})"
-            raise LuxmedSniperError(err_msg)
+            raise LuxmedSniperError(err_msg, response.status_code)
         return response
 
     @staticmethod
@@ -505,6 +510,7 @@ class LuxMedSniper:
         whether anything worked.
         """
         enabled = searched = 0
+        last_error = ""
         doctor_locator_dict: dict[str, Any]
         for doctor_locator_dict in self.config["luxmedsniper"]["doctor_locators"]:
             doctor_locator = DoctorLocator.model_validate(
@@ -543,8 +549,9 @@ class LuxMedSniper:
                         logger.info(f"Notification was already sent for: {doctor_locator.name}")
             except Exception as e:
                 logger.exception(f"Looking for appointments for {doctor_locator} failed, reason: {e}")
+                last_error = describe_failure(e)
 
-        return CheckResult(enabled=enabled, searched=searched)
+        return CheckResult(enabled=enabled, searched=searched, last_error=last_error)
 
     def get_cities(self) -> list[dict]:
         response = self._get(
@@ -574,7 +581,9 @@ class LuxMedSniper:
 
 
 class LuxmedSniperError(Exception):
-    pass
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code  # lets the alert name the HTTP code that caused the outage
 
 
 def setup_logging() -> None:
@@ -603,7 +612,9 @@ def setup_logging() -> None:
     # stdout only: whatever runs the process persists it - docker logs, journald, a shell
     # redirect. A second file sink would just duplicate this at the same level.
     handlers = [
-        dict(sink=sys.stdout, level=os.environ.get("LOGURU_LEVEL", "INFO")),
+        # diagnose=False: loguru otherwise appends the values of variables in scope to every
+        # traceback frame, and a network error inside _log_in would print the credentials dict.
+        dict(sink=sys.stdout, level=os.environ.get("LOGURU_LEVEL", "INFO"), diagnose=False),
     ]
     logger.configure(handlers=handlers)
 
@@ -651,8 +662,22 @@ def dump_current_ids(config, city_wildcard: str | None, dump_ids_doctors: bool) 
     json.dump(facilities_and_doctors, open('luxmed-ids/ids-facilities-doctors.json', 'w', encoding='utf-8'), indent=4, ensure_ascii=False)
 
 
+def describe_failure(error: BaseException) -> str:
+    """Names a failure the way an alert should read: the HTTP code and its label when there was
+    a response, the exception class when the request never got that far."""
+    status = getattr(error, "status_code", None)
+    if status is None:
+        # Our own wording is safe to forward; a parser error is not, because it quotes the
+        # offending line of the config - which may well be the one holding the password.
+        return str(error) if isinstance(error, LuxmedSniperError) else type(error).__name__
+    try:
+        return f"HTTP {status} {HTTPStatus(status).phrase}"
+    except ValueError:  # the portal is free to invent codes the stdlib does not know
+        return f"HTTP {status}"
+
+
 def add_critical_alert_sink(config: dict[str, Any]) -> None:
-    """Routes CRITICAL records to Pushover, when it is configured.
+    """Routes CRITICAL records, and anything bound with alert=True, to Pushover.
 
     A loguru sink rather than a call in each failure path, so any future logger.critical reaches
     the phone without extra plumbing. Notification providers cannot serve this: they are called
@@ -665,14 +690,19 @@ def add_critical_alert_sink(config: dict[str, Any]) -> None:
         return
 
     def sink(message: Any) -> None:
+        record = message.record
+        is_outage = record["level"].name == "CRITICAL"
         response = requests.post(
             "https://api.pushover.net/1/messages.json",
             data={
                 "token": pushover["api_token"],
                 "user": pushover["user_key"],
-                "title": "LUX MED Sniper alert!",
-                "message": message.record["message"],
-                "priority": 1,  # bypasses quiet hours - a dead sniper is worth waking up for
+                "title": "Awaria LUX MED Sniper" if is_outage else "LUX MED Sniper znów działa",
+                # The phone speaks Polish, the log stays English. A record without a Polish
+                # version still gets pushed, just in the log's wording.
+                "message": record["extra"].get("pushover") or record["message"],
+                # Outages bypass quiet hours; "it works again" has no business waking anyone.
+                "priority": 1 if is_outage else 0,
             },
             timeout=REQUEST_TIMEOUT,
         )
@@ -682,8 +712,15 @@ def add_critical_alert_sink(config: dict[str, Any]) -> None:
         else:
             logger.info("Alert sent to Pushover")
 
-    logger.add(sink, level="CRITICAL")
-    logger.info("CRITICAL records will also be sent to Pushover")
+    # level= alone cannot express this: SUCCESS sits below WARNING, so the threshold that lets
+    # the recovery notice through would also forward every warning. The filter picks the two
+    # events worth a push - an outage, and the recovery that ends it.
+    logger.add(
+        sink,
+        level="SUCCESS",
+        filter=lambda record: record["level"].name == "CRITICAL" or record["extra"].get("alert"),
+    )
+    logger.info("Outage and recovery notices will also be sent to Pushover")
 
 
 def write_heartbeat(delay: int) -> None:
@@ -712,9 +749,10 @@ def work(config: list[str], delay: int = 0) -> None:
         # token lives 10 minutes), and this way config edits apply without a restart.
         luxmed_sniper = LuxMedSniper(config)
         result = luxmed_sniper.check()
-    except Exception:  # schedule re-raises out of run_pending(), which would end the process
+    except Exception as e:  # schedule re-raises out of run_pending(), which would end the process
         logger.exception("Cycle failed, retrying on the next run")
-        result = CheckResult(enabled=1, searched=0)  # login died before any locator ran
+        # enabled=1: login died before any locator ran, which is an outage, not an idle config.
+        result = CheckResult(enabled=1, searched=0, last_error=describe_failure(e))
 
     if not result.enabled:
         # Every search is disabled on purpose. Nothing ran, but nothing is broken either, so
@@ -725,7 +763,22 @@ def work(config: list[str], delay: int = 0) -> None:
         return
 
     if result.searched:
-        if _failed_cycles:
+        if _failed_cycles >= FAILED_CYCLES_BEFORE_CRITICAL:
+            # Only worth a push if the outage was announced; otherwise "recovered" would refer
+            # to something nobody was told about.
+            logger.bind(
+                alert=True,
+                pushover=(
+                    f"Komunikacja z LuxMedem przywrócona – wyszukiwanie działa normalnie "
+                    f"po {_failed_cycles} nieudanych cyklach (~{_failed_cycles * delay // 60} min)."
+                ),
+            ).success(
+                "Talking to LuxMed again - searches are running normally after {} failed "
+                "cycles (~{} min).",
+                _failed_cycles,
+                _failed_cycles * delay // 60,
+            )
+        elif _failed_cycles:
             logger.success("Recovered after {} failed cycle(s)", _failed_cycles)
         _failed_cycles = 0
         write_heartbeat(delay)
@@ -737,12 +790,23 @@ def work(config: list[str], delay: int = 0) -> None:
     elif _failed_cycles == FAILED_CYCLES_BEFORE_CRITICAL:
         # Exactly once per outage. CRITICAL is wired to Pushover, and an alert per cycle would
         # be a flood rather than a signal - the health check already reports the ongoing state.
-        logger.critical(
-            "No search has reached the portal for ~{} min ({} cycles in a row). Check the "
-            "credentials, whether the account is locked, and the portal API. Sent once per "
-            "outage - the container keeps reporting itself unhealthy until searches succeed.",
-            (_failed_cycles - 1) * delay // 60,  # the first failure is one cycle back, not three
+        minutes = (_failed_cycles - 1) * delay // 60  # the first failure is one cycle back
+        reason = result.last_error or "unknown"
+        logger.bind(
+            pushover=(
+                f"Brak kontaktu z portalem LuxMed od ~{minutes} min "
+                f"(nieudane cykle: {_failed_cycles}). Ostatni błąd: {reason}. "
+                "Sprawdź dane logowania, czy konto nie zostało zablokowane i czy API portalu "
+                "odpowiada. Wysyłane raz na awarię – kolejną wiadomość dostaniesz, gdy "
+                "wyszukiwanie znów zadziała."
+            ),
+        ).critical(
+            "No search has reached the portal for ~{} min ({} cycles in a row). Last failure: "
+            "{}. Check the credentials, whether the account is locked, and the portal API. "
+            "Sent once per outage - you will get another message once searches work again.",
+            minutes,
             _failed_cycles,
+            reason,
         )
     else:
         logger.warning("Still not reaching the portal ({}. cycle in a row)", _failed_cycles)
