@@ -1,0 +1,36 @@
+# Tool configuration only. Deliberately no [project] / [build-system] tables: the app runs
+# from a checkout (see the Dockerfile), so there is nothing to build or install.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The tests import the package as `luxmedsniper.*`, so the repository root has to be importable
+# regardless of where pytest was invoked from.
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"  # matches the Dockerfile's base image
+
+[tool.ruff.lint]
+# Two rules in this set are suppressed in the code and the suppressions are the point: PLC0415
+# for the optional-dependency imports kept inside the notifier constructors, and S603 for the
+# aplay subprocess call. RUF100 (part of RUF) keeps those honest - it fails once one stops being
+# needed. The rest of the set is ordinary correctness and style coverage.
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "C90", "PL", "S", "SLF", "PTH", "DTZ", "RUF"]
+ignore = [
+    # The Pushover messages are written in Polish and use proper typography; an en dash in
+    # user-facing prose is intentional, not a typo for a hyphen.
+    "RUF001",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# conftest.py carries the shared fixtures, so it needs the same allowances as the tests.
+"tests/*.py" = [
+    "S101",     # asserts are the point
+    "S105",     # the *_THAT_MUST_NOT_LEAK constants are fake secrets
+    "S106",     # so are the passwords handed to Luxmed(...) in the credential tests
+    "PLR2004",  # expected counts inline in assertions read better than named constants
+    "PLC0415",  # one local import inside a test that needs it
+    "SLF001",   # tests reach for private helpers on purpose
+    "DTZ",      # fixture payloads use naive datetimes; the parser attaches the timezone
+]

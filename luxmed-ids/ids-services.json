@@ -115,12 +115,12 @@
         "telemedicine": true
     },
     {
-        "id": 13768,
+        "id": 16536,
         "name": "Konsultacja dietetyczna - telefoniczna (kolejna wizyta)",
         "telemedicine": true
     },
     {
-        "id": 13857,
+        "id": 16535,
         "name": "Konsultacja dietetyczna - telefoniczna (wizyta pierwszorazowa)",
         "telemedicine": true
     },
@@ -1265,8 +1265,33 @@
         "telemedicine": false
     },
     {
+        "id": 13670,
+        "name": "USG prącia",
+        "telemedicine": false
+    },
+    {
         "id": 7964,
         "name": "USG prostaty przez powłoki brzuszne",
+        "telemedicine": false
+    },
+    {
+        "id": 14428,
+        "name": "USG reumatologiczne - nadgarstków",
+        "telemedicine": false
+    },
+    {
+        "id": 14430,
+        "name": "USG reumatologiczne - stawów skokowych",
+        "telemedicine": false
+    },
+    {
+        "id": 14429,
+        "name": "USG reumatologiczne - śródręcza i palców obustronne",
+        "telemedicine": false
+    },
+    {
+        "id": 14431,
+        "name": "USG reumatologiczne - śródstopia i palców obustronne",
         "telemedicine": false
     },
     {
@@ -2695,6 +2720,11 @@
         "telemedicine": false
     },
     {
+        "id": 6866,
+        "name": "Kinesiotaping",
+        "telemedicine": false
+    },
+    {
         "id": 3816,
         "name": "Kolonoskopia",
         "telemedicine": false
@@ -2712,6 +2742,16 @@
     {
         "id": 6677,
         "name": "Konsultacja laktacyjna - dla ciężarnych",
+        "telemedicine": false
+    },
+    {
+        "id": 16603,
+        "name": "Konsultacja obesitologiczna – kolejna wizyta",
+        "telemedicine": false
+    },
+    {
+        "id": 16602,
+        "name": "Konsultacja obesitologiczna - pierwszorazowa",
         "telemedicine": false
     },
     {
@@ -2777,6 +2817,16 @@
     {
         "id": 6279,
         "name": "Rektoskopia",
+        "telemedicine": false
+    },
+    {
+        "id": 16429,
+        "name": "Rezonans magnetyczny - miednicy - ocena endometriozy",
+        "telemedicine": false
+    },
+    {
+        "id": 16582,
+        "name": "Rezonans magnetyczny - Whole Body",
         "telemedicine": false
     },
     {

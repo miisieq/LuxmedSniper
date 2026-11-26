@@ -119,6 +119,12 @@ data
 cities.json
 *.db
 
+# Facility dumps carry doctors' names - personal data, fetched from behind the patient
+# portal's login. The code never reads these files; they exist locally so a human can look
+# ids up when composing doctor_locators. The city and service dumps stay in the repo: those
+# hold no personal data and are the part worth sharing.
+luxmed-ids/ids-facilities-doctors*.json
+
 # real configs - only luxmed_sniper.example.yaml belongs in the repo
 luxmed_sniper.yaml
 luxmed_*.yml
