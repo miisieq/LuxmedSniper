@@ -5,9 +5,9 @@ import json
 import time
 
 import pytest
-from conftest import FakeResponse
+from conftest import MAINTENANCE_PAGE, OUTAGE_PAGE, FakeResponse
 
-from luxmedsniper.models import DoctorLocator, LuxmedSniperError
+from luxmedsniper.models import DoctorLocator, LuxmedSniperError, PortalMaintenance
 from luxmedsniper.portal import LuxMedPortal, parse_appointments
 
 
@@ -222,6 +222,33 @@ def test_an_error_page_is_not_mistaken_for_a_rejected_session():
 
     with pytest.raises(LuxmedSniperError, match="answered with an error \\(500\\)"):
         client._get("https://example.invalid")
+
+
+@pytest.mark.parametrize("call", ["login", "get"])
+def test_the_maintenance_page_is_recognised_on_any_endpoint(call):
+    """During planned work login and the JSON API alike answer 503 with the same static page."""
+    client, _ = portal_with(FakeResponse("POST", "u", 503, MAINTENANCE_PAGE, "text/html"))
+
+    with pytest.raises(PortalMaintenance) as raised:
+        client.login() if call == "login" else client._get("https://example.invalid")
+
+    assert raised.value.status_code == 503
+
+
+def test_a_503_without_the_maintenance_page_is_an_ordinary_failure():
+    client, _ = portal_with(FakeResponse("GET", "u", 503, OUTAGE_PAGE, "text/html"))
+
+    with pytest.raises(LuxmedSniperError) as raised:
+        client._get("https://example.invalid")
+
+    assert not isinstance(raised.value, PortalMaintenance), "it must still escalate"
+
+
+def test_the_marker_in_a_successful_reply_is_not_maintenance():
+    body = json.dumps({"note": "Przerwa techniczna"})
+    client, _ = portal_with(FakeResponse("GET", "u", 200, body))
+
+    assert client._get("https://example.invalid").json() == {"note": "Przerwa techniczna"}
 
 
 def test_a_json_200_passes_through():

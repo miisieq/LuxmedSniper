@@ -69,7 +69,8 @@ def add_critical_alert_sink(config: dict[str, Any]) -> int | None:
         is_outage = record["level"].name == "CRITICAL"
         response = pushover_push(
             pushover,
-            title="Awaria LUX MED Sniper" if is_outage else "LUX MED Sniper znów działa",
+            title=record["extra"].get("pushover_title")  # a notice that is neither outage nor recovery
+            or ("Awaria LUX MED Sniper" if is_outage else "LUX MED Sniper znów działa"),
             # The phone speaks Polish, the log stays English. A record without a Polish
             # version still gets pushed, just in the log's wording.
             message=record["extra"].get("pushover") or record["message"],

@@ -21,9 +21,16 @@ class LuxmedSniperError(Exception):
         self.status_code = status_code  # lets the alert name the HTTP code that caused the outage
 
 
+class PortalMaintenance(LuxmedSniperError):
+    """The portal answered with its "Przerwa techniczna" page: planned work on LUX MED's side,
+    which no credential or config fix on ours can cure, so it must not escalate as an outage."""
+
+
 def describe_failure(error: BaseException) -> str:
     """Names a failure the way an alert should read: the HTTP code and its label when there was
     a response, the exception class when the request never got that far."""
+    if isinstance(error, PortalMaintenance):
+        return f"portal maintenance (HTTP {error.status_code})"
     status = getattr(error, "status_code", None)
     if status is None:
         # Our own wording is safe to forward; a parser error is not, because it quotes the
@@ -94,6 +101,7 @@ class CheckResult(typing.NamedTuple):
     enabled: int
     searched: int
     last_error: str = ""  # most recent failure, so the alert can name what is actually wrong
+    maintenance: bool = False  # the portal itself announced a technical break this cycle
 
 
 class LocatorSet(typing.NamedTuple):

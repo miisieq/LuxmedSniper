@@ -4,7 +4,14 @@ import datetime
 
 import pytest
 
-from luxmedsniper.models import Appointment, CheckResult, DoctorLocator, LocatorSet, LuxmedSniperError
+from luxmedsniper.models import (
+    Appointment,
+    CheckResult,
+    DoctorLocator,
+    LocatorSet,
+    LuxmedSniperError,
+    PortalMaintenance,
+)
 from luxmedsniper.runner import FAILED_CYCLES_BEFORE_CRITICAL, CycleRunner, run_checks
 
 
@@ -135,6 +142,20 @@ def test_one_broken_search_does_not_stop_the_others():
     assert result.last_error == "HTTP 503 Service Unavailable"
 
 
+def test_maintenance_met_by_a_search_marks_the_cycle():
+    """Login can succeed a moment before the break starts; the searches then meet the page."""
+    result = check(FakePortal(PortalMaintenance("down", 503)), [locator()])
+
+    assert result.maintenance
+    assert result.searched == 0
+
+
+def test_an_ordinary_failure_does_not_mark_maintenance():
+    result = check(FakePortal(LuxmedSniperError("nope", 503)), [locator()])
+
+    assert not result.maintenance
+
+
 def test_the_last_error_is_the_most_recent_one():
     class Failing(FakePortal):
         def search_appointments(self, loc, lookup_days):
@@ -262,6 +283,64 @@ def test_the_alert_names_the_last_error_and_the_elapsed_time(runner_of, log):
     captured = log.getvalue()
     assert "Last failure: HTTP 503 Service Unavailable" in captured
     assert "~30 min" in captured, "two intervals since the first failure"
+
+
+# --- planned maintenance --------------------------------------------------------------------
+
+MAINT = CheckResult(enabled=1, searched=0, last_error="portal maintenance (HTTP 503)", maintenance=True)
+
+
+def test_maintenance_never_escalates(runner_of, log):
+    runner = runner_of([MAINT] * 6)
+    for _ in range(6):
+        runner.run_cycle()
+
+    assert "CRITICAL" not in levels(log.getvalue())
+    assert runner.failed_cycles == 0
+
+
+def test_maintenance_keeps_the_heartbeat_alive(runner_of, monkeypatch):
+    runner = runner_of([MAINT])
+    beats = []
+    monkeypatch.setattr("luxmedsniper.runner.write_heartbeat", beats.append)
+    runner.run_cycle()
+
+    assert beats == [900], "planned work on LUX MED's side must not mark the container unhealthy"
+
+
+def test_maintenance_is_announced_once_at_its_start_and_once_at_its_end(runner_of, log, pushover_texts):
+    runner = runner_of([MAINT, MAINT, MAINT, OK, OK])
+    for _ in range(5):
+        runner.run_cycle()
+
+    polish = [text for text in pushover_texts if text]
+    assert len(polish) == 2
+    assert "przerwę techniczną" in polish[0]
+    assert "zakończona" in polish[1]
+    assert "Komunikacja z LuxMedem przywrócona" not in polish[1], "no outage was announced"
+
+
+def test_failures_leading_into_maintenance_do_not_carry_over(runner_of, log):
+    runner = runner_of([FAIL, FAIL, MAINT, FAIL])
+    for _ in range(4):
+        runner.run_cycle()
+
+    assert "CRITICAL" not in levels(log.getvalue()), "they were the break's onset, not three in a row"
+
+
+def test_maintenance_at_login_counts_as_maintenance(monkeypatch, log):
+    runner = CycleRunner(["unused.yaml"], 900)
+
+    def down():
+        raise PortalMaintenance("down", 503)
+
+    monkeypatch.setattr(runner, "_collaborators", down)
+    monkeypatch.setattr("luxmedsniper.runner.write_heartbeat", lambda delay: None)
+    for _ in range(FAILED_CYCLES_BEFORE_CRITICAL):
+        runner.run_cycle()
+
+    assert runner.in_maintenance
+    assert runner.failed_cycles == 0
 
 
 # --- locators that would not parse -----------------------------------------------------------
