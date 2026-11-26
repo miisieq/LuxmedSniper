@@ -27,10 +27,10 @@ luxmedsniper:
   notification_provider:
     - console
 
-# Template fields: {AppointmentDate} {ClinicPublicName} {DoctorName} {clinic_id} {service_id}
-# {name} - the search name above - works ONLY in console and console_async; every other
-# provider formats against the appointment alone and raises KeyError on it.
-# {AppointmentDate} is a datetime, so it takes a format spec: {AppointmentDate:%Y-%m-%d %H:%M}
+# Template fields, the same in every provider: {name} - the search name above - plus
+# {AppointmentDate} {ClinicPublicName} {DoctorName} {clinic_id} {service_id} from the slot that
+# was found. {AppointmentDate} is a datetime, so it takes a format spec:
+# {AppointmentDate:%Y-%m-%d %H:%M}
 console:
   message_template: "{name} - {AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
 
@@ -54,9 +54,7 @@ ntfy:
 slack:
   api_token:  # your slack application token
   channel:    # notification channel
-  # Note: the slack provider formats with .format(vars(appointment)) - positional - so
-  # named placeholders raise KeyError. Keep the text static until that is fixed.
-  message_template: "New Lux Med visit available!"
+  message_template: "{name} - {AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
 
 pushbullet:
   access_token:  # your pushbullet access token

@@ -1,1 +1,4 @@
 pytest==9.1.1
+# Pinned: the select/ignore set in pyproject.toml was measured against this exact version, and
+# ruff adds rules in minor releases, so an unpinned upgrade turns CI red on an unrelated PR.
+ruff==0.15.21

@@ -17,5 +17,10 @@ __pycache__
 # Lookup tables for humans, not used at runtime.
 luxmed-ids
 
+# Tests and tooling never belong in the image.
+tests
+pyproject.toml
+dev-requirements.txt
+
 .DS_Store
 .idea

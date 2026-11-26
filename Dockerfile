@@ -12,8 +12,10 @@ RUN sed '/PyGObject/d' optional-requirements.txt > /tmp/opt.txt \
  && pip install --no-cache-dir -r requirements.txt -r /tmp/opt.txt \
  && rm /tmp/opt.txt
 
-# Only the script. luxmed-ids/ is a lookup table for humans, the code never reads it.
+# The package and its entry point. Nothing else is runtime code: tests/ is excluded in
+# .dockerignore, and luxmed-ids/ is a lookup table for humans that the code never reads.
 COPY luxmed_sniper.py ./
+COPY luxmedsniper/ ./luxmedsniper/
 
 RUN useradd --create-home --uid 10001 sniper \
  && mkdir /data && chown sniper:sniper /data
@@ -22,8 +24,8 @@ USER sniper
 # CWD inside the volume, so a relative misc.notifydb lands somewhere persistent.
 WORKDIR /data
 
-# work() swallows every cycle failure so one bad cycle cannot kill the scheduler, which also
-# means a container with wrong credentials stays "Up" forever. Each cycle that actually reached
+# CycleRunner.run_cycle swallows every cycle failure so one bad cycle cannot kill the
+# scheduler, which also means a container with wrong credentials stays "Up" forever. Each cycle that actually reached
 # the portal writes its own expiry here; going stale is the only signal that nothing works.
 ENV LUXMED_HEARTBEAT_FILE=/data/heartbeat
 HEALTHCHECK --interval=60s --timeout=5s --start-period=180s --retries=2 \

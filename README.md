@@ -16,6 +16,18 @@ Every option is documented inline in the template: which ids go into `doctor_loc
 which notification providers exist and what each one needs. City and service ids can be
 looked up in `luxmed-ids/`, or regenerated with `python3 luxmed_sniper.py --dump-ids`.
 
+City and service ids are cheap to refresh (two requests) and live in the repo. Facility and
+doctor ids are not: they need `--dump-ids-doctors`, which issues one request per city and
+service, so narrow it with `--dump-ids-city` and mind the fair use warning at the bottom of
+this file:
+```
+python3 luxmed_sniper.py --dump-ids --dump-ids-doctors --dump-ids-city "Trojmiasto"
+```
+The resulting `ids-facilities-doctors-*.json` is **gitignored on purpose** - it pairs doctors'
+real names with the clinic and service they work at, which is personal data taken from behind
+the portal's login, and nothing in the code reads it. Keep it local; it is there for you to
+search when composing `doctor_locators`.
+
 Configuration for several people goes into separate files - name them `luxmed_<user>.yml`
 or `local-<user>.yaml`, both of which are gitignored.
 
