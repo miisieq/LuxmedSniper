@@ -21,7 +21,8 @@ PUSHOVER_API_TOKEN = "API_TOKEN_THAT_MUST_NOT_LEAK"
 SESSION_TOKEN = "TOKEN_THAT_MUST_NOT_LEAK"
 
 LOGIN_BODY = json.dumps({"token": SESSION_TOKEN})
-MAINTENANCE_PAGE = "<html><body>Przerwa techniczna</body></html>" + "x" * 900
+MAINTENANCE_PAGE = "<html><head><title>Przerwa techniczna</title></head><body>" + "x" * 900 + "</body></html>"
+OUTAGE_PAGE = "<html><body>Service Unavailable</body></html>" + "x" * 900  # a 503 that is not the planned break
 
 
 def terms(count: int) -> str:

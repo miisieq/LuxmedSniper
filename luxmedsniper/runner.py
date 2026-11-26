@@ -8,7 +8,7 @@ from typing import Any
 from loguru import logger
 
 from .config import build_locators, load_configuration
-from .models import CheckResult, LocatorSet, Luxmed, describe_failure
+from .models import CheckResult, LocatorSet, Luxmed, PortalMaintenance, describe_failure
 from .notifications import Notifier, build_notifiers, dispatch
 from .portal import LuxMedPortal
 from .state import NotificationStore
@@ -49,6 +49,7 @@ def run_checks(
     enabled = len(locator_set.errors)
     searched = 0
     last_error = locator_set.errors[-1] if locator_set.errors else ""
+    maintenance = False
     for locator in locator_set.locators:
         if not locator.enabled:
             logger.info(f"Appointments skipping: {locator.name}, disabled")
@@ -84,21 +85,25 @@ def run_checks(
         except Exception as e:
             logger.exception(f"Looking for appointments for {locator} failed, reason: {e}")
             last_error = describe_failure(e)
+            maintenance = maintenance or isinstance(e, PortalMaintenance)  # the break can begin mid-cycle
 
-    return CheckResult(enabled=enabled, searched=searched, last_error=last_error)
+    return CheckResult(enabled=enabled, searched=searched, last_error=last_error, maintenance=maintenance)
 
 
 class CycleRunner:
-    """Owns the one piece of state that outlives a cycle: how many have failed in a row.
+    """Owns the state that outlives a cycle: how many have failed in a row, and whether the
+    portal is in a technical break.
 
     It has to outlive a cycle - the escalation to CRITICAL fires on the third consecutive
-    failure, so a fresh instance per cycle would never get past one.
+    failure, so a fresh instance per cycle would never get past one, and the break is announced
+    once at its start and once at its end.
     """
 
     def __init__(self, config_paths: list[str], delay: int = 0) -> None:
         self.config_paths = config_paths
         self.delay = delay
         self.failed_cycles = 0
+        self.in_maintenance = False
 
     def _collaborators(self) -> tuple[LuxMedPortal, LocatorSet, NotificationStore, list[Notifier], int]:
         """Everything is rebuilt from the config file each cycle, which is what makes an edit
@@ -133,7 +138,9 @@ class CycleRunner:
         except Exception as e:  # schedule re-raises out of run_pending(), ending the process
             logger.exception("Cycle failed, retrying on the next run")
             # enabled=1: login died before any locator ran, which is an outage, not an idle config.
-            result = CheckResult(enabled=1, searched=0, last_error=describe_failure(e))
+            result = CheckResult(
+                enabled=1, searched=0, last_error=describe_failure(e), maintenance=isinstance(e, PortalMaintenance),
+            )
 
         if not result.enabled:
             # Every search is disabled on purpose. Nothing ran, but nothing is broken either, so
@@ -144,12 +151,48 @@ class CycleRunner:
             return
 
         if result.searched:
+            self._announce_maintenance_over()
             self._announce_recovery()
             self.failed_cycles = 0
             write_heartbeat(self.delay)
             return
 
+        if result.maintenance:
+            # Planned work on LUX MED's side: no credential or config fix can help, so it neither
+            # counts towards CRITICAL nor marks the container unhealthy. Failures that led into
+            # it were most likely its onset, hence the reset.
+            self._announce_maintenance()
+            self.failed_cycles = 0
+            write_heartbeat(self.delay)
+            return
+
         self._announce_failure(result)
+
+    def _announce_maintenance(self) -> None:
+        if self.in_maintenance:
+            logger.info("The portal is still down for maintenance")
+            return
+        self.in_maintenance = True
+        logger.bind(
+            alert=True,
+            pushover_title="Przerwa techniczna LUX MED",
+            pushover=(
+                "Portal LuxMed ogłosił przerwę techniczną – wyszukiwanie wstrzymane do jej końca. "
+                "Sniper sprawdza dalej co cykl i da znać, gdy portal wróci."
+            ),
+        ).success(
+            "The portal is down for maintenance - searches pause until it is back. "
+            "Checking every cycle; another message follows when it returns.",
+        )
+
+    def _announce_maintenance_over(self) -> None:
+        if not self.in_maintenance:
+            return
+        self.in_maintenance = False
+        logger.bind(
+            alert=True,
+            pushover="Przerwa techniczna LuxMedu zakończona – wyszukiwanie działa normalnie.",
+        ).success("The portal's maintenance is over - searches are running normally.")
 
     def _announce_recovery(self) -> None:
         if self.failed_cycles >= FAILED_CYCLES_BEFORE_CRITICAL:

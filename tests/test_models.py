@@ -4,7 +4,7 @@ import pytest
 import yaml
 from conftest import PASSWORD
 
-from luxmedsniper.models import DoctorLocator, Luxmed, LuxmedSniperError, describe_failure
+from luxmedsniper.models import DoctorLocator, Luxmed, LuxmedSniperError, PortalMaintenance, describe_failure
 
 
 @pytest.mark.parametrize(
@@ -13,6 +13,10 @@ from luxmedsniper.models import DoctorLocator, Luxmed, LuxmedSniperError, descri
 )
 def test_describe_failure_handles_unknown_codes(status, expected):
     assert describe_failure(LuxmedSniperError("boom", status)) == expected
+
+
+def test_describe_failure_names_maintenance_rather_than_a_bare_503():
+    assert describe_failure(PortalMaintenance("down", 503)) == "portal maintenance (HTTP 503)"
 
 
 def test_describe_failure_uses_our_own_wording():

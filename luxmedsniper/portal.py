@@ -9,10 +9,11 @@ import requests
 from loguru import logger
 from pydantic import BaseModel, ValidationError
 
-from .models import Appointment, DoctorLocator, LuxmedSniperError
+from .models import Appointment, DoctorLocator, LuxmedSniperError, PortalMaintenance
 
 REQUEST_TIMEOUT = 30
 LOG_BODY_MAX_CHARS = 500
+MAINTENANCE_MARKER = "Przerwa techniczna"  # <title> of the static page served during planned work
 
 BROWSER_HEADERS = {  # what the Patient Portal SPA sends
     "User-Agent": (
@@ -197,7 +198,21 @@ class LuxMedPortal:
         # what tells a maintenance window apart from a WAF block.
         redact = url.startswith(LuxMedPortal.LUXMED_LOGIN_URL) and response.status_code == requests.codes["ok"]
         LuxMedPortal._log_http(response, redact_body=redact)
+        if LuxMedPortal._is_maintenance(response):
+            err_msg = f"The portal is down for maintenance ({response.status_code})"
+            raise PortalMaintenance(err_msg, response.status_code)
         return response
+
+    @staticmethod
+    def _is_maintenance(response: requests.Response) -> bool:
+        """During planned work every endpoint, login and JSON API alike, answers 503 with the
+        same static page. Checked here so it is recognised whichever request meets it first.
+        A 503 without the marker stays an ordinary failure and escalates as one.
+        """
+        return (
+            response.status_code == requests.codes["service_unavailable"]
+            and MAINTENANCE_MARKER in response.text
+        )
 
     @staticmethod
     def _is_session_expired(response: requests.Response) -> bool:

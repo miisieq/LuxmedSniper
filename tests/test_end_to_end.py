@@ -12,6 +12,7 @@ import requests
 from conftest import (
     LOGIN_BODY,
     MAINTENANCE_PAGE,
+    OUTAGE_PAGE,
     PASSWORD,
     PUSHOVER_API_TOKEN,
     PUSHOVER_USER_KEY,
@@ -170,7 +171,7 @@ def test_known_appointments_are_not_announced_twice(http, log, config):
 
 @pytest.fixture
 def failing(http):
-    http.login_plan = lambda n: FakeResponse("POST", LOGIN_URL, 503, MAINTENANCE_PAGE, "text/html")
+    http.login_plan = lambda n: FakeResponse("POST", LOGIN_URL, 503, OUTAGE_PAGE, "text/html")
     return http
 
 
@@ -210,7 +211,7 @@ def test_alert_reports_the_most_recent_cause(http, log, config):
     def plan(n):
         if n < 3:
             raise requests.exceptions.ConnectionError("down")
-        return FakeResponse("POST", LOGIN_URL, 503, MAINTENANCE_PAGE, "text/html")
+        return FakeResponse("POST", LOGIN_URL, 503, OUTAGE_PAGE, "text/html")
 
     http.login_plan = plan
     run_cycles(config(), count=3)
@@ -257,7 +258,7 @@ def test_outage_and_recovery_each_send_one_push(http, log, config):
     path = config()
     _with_sink(path)
     http.login_plan = lambda n: (
-        FakeResponse("POST", LOGIN_URL, 503, MAINTENANCE_PAGE, "text/html")
+        FakeResponse("POST", LOGIN_URL, 503, OUTAGE_PAGE, "text/html")
         if n <= 3
         else FakeResponse("POST", LOGIN_URL, body=LOGIN_BODY)
     )
@@ -281,7 +282,7 @@ def test_recovery_without_an_announced_outage_stays_quiet(http, log, config):
     path = config()
     _with_sink(path)
     http.login_plan = lambda n: (
-        FakeResponse("POST", LOGIN_URL, 503, MAINTENANCE_PAGE, "text/html")
+        FakeResponse("POST", LOGIN_URL, 503, OUTAGE_PAGE, "text/html")
         if n == 1
         else FakeResponse("POST", LOGIN_URL, body=LOGIN_BODY)
     )
@@ -289,6 +290,33 @@ def test_recovery_without_an_announced_outage_stays_quiet(http, log, config):
     run_cycles(path, count=3)
 
     assert http.pushes == [], "nobody was told about an outage, so there is nothing to recover from"
+
+
+def test_maintenance_sends_a_notice_at_its_start_and_its_end(http, log, config):
+    path = config()
+    _with_sink(path)
+    http.login_plan = lambda n: (
+        FakeResponse("POST", LOGIN_URL, 503, MAINTENANCE_PAGE, "text/html")
+        if n <= 5
+        else FakeResponse("POST", LOGIN_URL, body=LOGIN_BODY)
+    )
+
+    run_cycles(path, count=6)
+
+    assert [push["title"] for push in http.pushes] == ["Przerwa techniczna LUX MED", "LUX MED Sniper znów działa"]
+    assert [push["priority"] for push in http.pushes] == [0, 0], "planned work wakes nobody"
+    assert "CRITICAL" not in _levels(log.getvalue())
+    assert (config.tmp_path / "heartbeat").exists()
+
+
+def test_maintenance_that_begins_after_login_is_recognised(http, log, config):
+    path = config()
+    _with_sink(path)
+    http.search_plan = lambda n: FakeResponse("GET", SEARCH_URL, 503, MAINTENANCE_PAGE, "text/html")
+
+    run_cycles(path, count=4)
+
+    assert [push["title"] for push in http.pushes] == ["Przerwa techniczna LUX MED"]
 
 
 def test_healthy_cycles_send_nothing(http, log, config):
