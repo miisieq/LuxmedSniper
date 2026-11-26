@@ -69,6 +69,30 @@ def test_a_malformed_id_is_rejected_with_the_expected_format(bad_id):
         DoctorLocator.model_validate({"id": bad_id})
 
 
+def test_a_locator_has_no_referral_unless_one_is_configured():
+    locator = DoctorLocator.model_validate({"id": "45*4502*-1*-1"})
+
+    assert locator.referral_id is None
+    assert locator.referral_type_id is None
+
+
+def test_a_referral_is_read_from_the_locator():
+    locator = DoctorLocator.model_validate(
+        {"id": "45*4502*-1*-1", "referral_id": 123456789, "referral_type_id": 3},
+    )
+
+    assert locator.referral_id == 123456789
+    assert locator.referral_type_id == 3
+
+
+@pytest.mark.parametrize("lonely", [{"referral_id": 123456789}, {"referral_type_id": 3}])
+def test_half_a_referral_is_rejected(lonely):
+    """The portal was only ever seen taking both; sending one would search for something else
+    than the config asked for, and an empty result would look like an empty schedule."""
+    with pytest.raises(ValueError, match="must be set together"):
+        DoctorLocator.model_validate({"id": "45*4502*-1*-1", **lonely})
+
+
 # --- Luxmed credentials ----------------------------------------------------------------------
 
 

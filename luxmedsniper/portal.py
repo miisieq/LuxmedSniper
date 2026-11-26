@@ -159,14 +159,15 @@ class LuxMedPortal:
     def search_appointments(self, locator: DoctorLocator, lookup_days: int) -> list[Appointment]:
         logger.info(f"Get appointments for: {locator}")
 
-        date_to = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=lookup_days)
+        now = datetime.datetime.now().astimezone()  # system zone: the portal's "today" is the patient's
+        date_to = now + datetime.timedelta(days=lookup_days)
 
         params = {
             "searchPlace.id": locator.city_id,
             "searchPlace.type": 0,
             "serviceVariantId": locator.service_id.split(",")[0],
             "languageId": 10,
-            "searchDateFrom": datetime.datetime.now(tz=datetime.UTC).date().strftime("%Y-%m-%d"),
+            "searchDateFrom": now.strftime("%Y-%m-%d"),
             "searchDateTo": date_to.strftime("%Y-%m-%d"),
             "searchDatePreset": lookup_days,
             "delocalized": "false",
@@ -177,6 +178,9 @@ class LuxMedPortal:
             params["facilitiesIds"] = locator.clinic_ids
         if locator.doctor_ids:
             params["doctorsIds"] = locator.doctor_ids
+        if locator.referral_id is not None:
+            params["referralId"] = locator.referral_id
+            params["referralTypeId"] = locator.referral_type_id
 
         logger.debug("Parameters: {}", params)
 

@@ -45,6 +45,15 @@ class DoctorLocator(BaseModel):
     clinic_ids: list[int] = Field(default_factory=list)
     doctor_ids: list[int] = Field(default_factory=list)
 
+    referral_id: int | None = None  # the patient's own referral; unlocks slots reserved for its holders
+    referral_type_id: int | None = None  # the portal sent 3 for a follow-up visit (wizyta kontrolna)
+
+    @model_validator(mode="after")
+    def _referral_fields_come_together(self) -> "DoctorLocator":
+        if (self.referral_id is None) != (self.referral_type_id is None):
+            raise ValueError("referral_id and referral_type_id must be set together")
+        return self
+
     @model_validator(mode="before")
     @classmethod
     def _parse_from_id_and_config(cls, data: Any, info):

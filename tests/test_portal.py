@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import time
 
 import pytest
 from conftest import FakeResponse
@@ -30,8 +31,8 @@ def term(doctor_id=67013, clinic_group_id=1, clinic_id=1):
     }
 
 
-def locator(spec="45*4502*-1*-1"):
-    return DoctorLocator.model_validate({"id": spec})
+def locator(spec="45*4502*-1*-1", **extra):
+    return DoctorLocator.model_validate({"id": spec, **extra})
 
 
 # --- parsing ---------------------------------------------------------------------------------
@@ -198,6 +199,51 @@ def test_no_filter_ids_are_sent_when_the_locator_has_none():
     [params] = session.params
     assert "facilitiesIds" not in params
     assert "doctorsIds" not in params
+
+
+def test_a_referral_is_sent_to_the_portal():
+    """Slots reserved for referral holders are invisible to a search that does not name one."""
+    client, session = searching_portal(json.dumps(payload()))
+
+    client.search_appointments(locator(referral_id=123456789, referral_type_id=3), lookup_days=14)
+
+    [params] = session.params
+    assert params["referralId"] == 123456789
+    assert params["referralTypeId"] == 3
+
+
+def test_no_referral_is_sent_when_the_locator_has_none():
+    client, session = searching_portal(json.dumps(payload()))
+
+    client.search_appointments(locator(), lookup_days=14)
+
+    [params] = session.params
+    assert "referralId" not in params
+    assert "referralTypeId" not in params
+
+
+@pytest.fixture
+def zone_on_another_day(monkeypatch):
+    """Moves the system zone to wherever the calendar date differs from the UTC one right now,
+    and hands back the offset, so a search that still counted in UTC cannot pass by luck."""
+    ahead = datetime.datetime.now(tz=datetime.UTC).hour >= 12
+    monkeypatch.setenv("TZ", "Pacific/Kiritimati" if ahead else "Etc/GMT+12")  # UTC+14 / UTC-12
+    time.tzset()
+    yield datetime.timedelta(hours=14 if ahead else -12)
+    monkeypatch.undo()
+    time.tzset()
+
+
+def test_the_search_window_follows_the_system_clock_not_utc(zone_on_another_day):
+    client, session = searching_portal(json.dumps(payload()))
+
+    client.search_appointments(locator(), lookup_days=14)
+
+    today = (datetime.datetime.now(tz=datetime.UTC) + zone_on_another_day).date()
+    assert today != datetime.datetime.now(tz=datetime.UTC).date(), "the fixture must pick another day"
+    [params] = session.params
+    assert params["searchDateFrom"] == today.isoformat()
+    assert params["searchDateTo"] == (today + datetime.timedelta(days=14)).isoformat()
 
 
 def test_only_the_first_service_variant_is_searched():

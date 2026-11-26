@@ -20,6 +20,13 @@ luxmedsniper:
     - id: 1*4565*-1*-1    # Warszawa, Konsultacja okulistyczna - bez badania dna oka
       name: Ophthalmologist
       enabled: False      # skip this search without deleting it
+    # Some slots are reserved for referral holders (e.g. a follow-up visit) and stay invisible
+    # to a plain search. Both keys go together; the ids are in the address bar of the portal
+    # when you search from the referral there: ...&referralId=...&referralTypeId=3&...
+    # - id: 1*4502*-1*-1
+    #   name: Internist, follow-up
+    #   referral_id: 123456789
+    #   referral_type_id: 3
   lookup_time_days: 14    # how many days ahead to search
   facilities_ids: []      # extra facility ids appended to every locator
   # console, console_async, pushover, ntfy, slack, pushbullet, telegram, gi, sound
