@@ -38,6 +38,13 @@ luxmedsniper:
 # {AppointmentDate} {ClinicPublicName} {DoctorName} {clinic_id} {service_id} from the slot that
 # was found. {AppointmentDate} is a datetime, so it takes a format spec:
 # {AppointmentDate:%Y-%m-%d %H:%M}
+# {weekday} is the slot's day of the week in Polish (pon, wt, śr, czw, pt, sob, niedz) - unlike
+# %a it does not depend on the system locale. A template may span several lines:
+#   message_template: |-
+#     {name}
+#     {AppointmentDate:%Y-%m-%d} ({weekday}) {AppointmentDate:%H:%M}
+#     {ClinicPublicName}
+#     {DoctorName}
 console:
   message_template: "{name} - {AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
 
@@ -50,7 +57,7 @@ pushover:
   user_key:   # your pushover.net user key
   api_token:  # pushover.net app API token
   message_template: "{AppointmentDate:%Y-%m-%d %H:%M} at {ClinicPublicName} - {DoctorName}"
-  title: "New Lux Med visit available!"
+  title: "New Lux Med visit available: {name}"  # takes the same fields; cut at 250 characters
 
 ntfy:
   # On public ntfy.sh the topic is the only secret - anyone who guesses it reads your

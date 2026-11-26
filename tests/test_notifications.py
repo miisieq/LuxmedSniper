@@ -1,5 +1,6 @@
 """Message formatting and provider dispatch."""
 
+import dataclasses
 import datetime
 
 import pytest
@@ -23,6 +24,17 @@ def appointment():
 
 
 # --- formatting ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("day", "expected"),
+    [(5, "pon"), (6, "wt"), (7, "śr"), (8, "czw"), (9, "pt"), (10, "sob"), (11, "niedz")],
+)
+def test_the_weekday_is_polish_whatever_the_locale(day, expected):
+    """%a would say "Fri" in the container, which has no Polish locale installed."""
+    slot = dataclasses.replace(appointment(), AppointmentDate=datetime.datetime(2026, 10, day, 14, 30))
+
+    assert format_message("{weekday}", locator(), slot) == expected
 
 
 def test_appointment_fields_are_available():
@@ -178,6 +190,26 @@ def test_pushover_raises_when_the_api_rejects_the_push(monkeypatch, log):
     assert "Pushover error: bad token" in log.getvalue()
 
 
+def test_pushover_cuts_a_title_the_api_would_refuse(monkeypatch):
+    """A long search name must not cost the notification: the slot is already recorded as
+    announced by the time the push goes out, so a rejected push is never retried."""
+    import requests
+
+    sent = {}
+    monkeypatch.setattr(
+        requests, "post",
+        lambda url, **kw: sent.update(kw["data"]) or type("R", (), {"status_code": 200, "text": "{}"})(),
+    )
+    config = {
+        "luxmedsniper": {"notification_provider": ["pushover"]},
+        "pushover": {"user_key": "u", "api_token": "a", "title": "{name}" * 100, "message_template": "x"},
+    }
+
+    dispatch(build_notifiers(config), locator(), appointment())
+
+    assert sent["title"] == ("Internist" * 100)[:250]
+
+
 def test_pushover_sends_the_rendered_template(monkeypatch):
     import requests
 
@@ -191,7 +223,7 @@ def test_pushover_sends_the_rendered_template(monkeypatch):
     config = {
         "luxmedsniper": {"notification_provider": ["pushover"]},
         "pushover": {
-            "user_key": "u", "api_token": "a", "title": "New visit",
+            "user_key": "u", "api_token": "a", "title": "New visit: {name}",
             "message_template": "{name} - {DoctorName}",
         },
     }
@@ -199,7 +231,7 @@ def test_pushover_sends_the_rendered_template(monkeypatch):
     dispatch(build_notifiers(config), locator(), appointment())
 
     assert sent["message"] == "Internist - lek. Jan Kowalski"
-    assert sent["title"] == "New visit"
+    assert sent["title"] == "New visit: Internist"
     assert "priority" not in sent, "only the alert sink sets a priority"
 
 

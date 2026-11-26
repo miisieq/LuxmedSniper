@@ -28,6 +28,7 @@ from .models import Appointment, DoctorLocator, LuxmedSniperError
 
 PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
 PUSHOVER_PROVIDER_TIMEOUT = 10
+PUSHOVER_TITLE_LIMIT = 250  # characters, per the Pushover API docs
 # The alert sink is more patient than a provider: it is reporting that everything else is already
 # broken, so it is worth waiting longer for it to get through.
 PUSHOVER_ALERT_TIMEOUT = 30
@@ -40,6 +41,9 @@ class Notifier(Protocol):
     def send(self, locator: DoctorLocator, appointment: Appointment) -> Any: ...
 
 
+WEEKDAYS_PL = ("pon", "wt", "śr", "czw", "pt", "sob", "niedz")  # indexed by datetime.weekday()
+
+
 def format_message(template: str, locator: DoctorLocator, appointment: Appointment) -> str:
     """The one place a message template is rendered.
 
@@ -50,7 +54,11 @@ def format_message(template: str, locator: DoctorLocator, appointment: Appointme
     Called from `send` rather than hoisted into `dispatch` on purpose: a typo in one provider's
     template must break that provider only, not every channel configured.
     """
-    fields = {**vars(locator), **vars(appointment)}
+    fields = {
+        **vars(locator),
+        **vars(appointment),
+        "weekday": WEEKDAYS_PL[appointment.AppointmentDate.weekday()],  # %a would follow the locale
+    }
     return template.format(**fields)
 
 
@@ -73,7 +81,7 @@ def pushover_push(
         "token": credentials["api_token"],
         "user": credentials["user_key"],
         "message": message,
-        "title": title,
+        "title": title[:PUSHOVER_TITLE_LIMIT],  # a refused push is never retried
     }
     if priority is not None:
         data["priority"] = priority
@@ -94,7 +102,7 @@ class PushoverNotifier:
     def send(self, locator: DoctorLocator, appointment: Appointment) -> None:
         response = pushover_push(
             self._credentials,
-            title=self._title,
+            title=format_message(self._title, locator, appointment),  # so it can carry {name}
             message=format_message(self._template, locator, appointment),
             timeout=PUSHOVER_PROVIDER_TIMEOUT,
         )
