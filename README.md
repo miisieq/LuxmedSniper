@@ -5,7 +5,8 @@ Simple tool to notify about available slot in LUX MED medical care service using
 
 How to use LuxmedSniper?
 --------------------
-First of all create virtualenv and install Python requirements from requirements.txt
+First of all create a virtualenv and install the requirements - the exact commands are in
+[Running locally without Docker](#running-locally-without-docker) below.
 
 1) Copy the template and fill in your credentials. The copy is gitignored, the template is not
    - never put real credentials in `luxmed_sniper.example.yaml`:
@@ -44,6 +45,56 @@ Note that merging cannot override a value - a key present in two files must hold
 value in both, otherwise the script stops with a conflict error.
 
 3) Wait for new appointment notifications in your pushover app on mobile :)!
+
+Running locally without Docker
+--------------------
+The Docker image runs Python 3.12, so use the same locally. Create the virtualenv once:
+```
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r dev-requirements.txt
+```
+`requirements.txt` is enough to run the script; `dev-requirements.txt` adds pytest and ruff.
+`optional-requirements.txt` is only needed for the slack, pushbullet, telegram and gi providers -
+pushover, ntfy and console work without it.
+
+With `luxmed_sniper.yaml` prepared as in step 1, start it from the repository root:
+```
+python3 luxmed_sniper.py
+```
+The first cycle runs immediately and the script then repeats every 1800 seconds until stopped
+with Ctrl+C. The config is re-read every cycle, so an edit takes effect without a restart - except
+the Pushover credentials used for outage alerts, which are read once at startup.
+
+**Search interval.** `-d` takes seconds, and `LUXMED_INTERVAL` does the same from the environment:
+```
+python3 luxmed_sniper.py -d 3600
+```
+Do not shorten it to speed up testing - every start logs in and searches for real, see the
+warning at the bottom of this file.
+
+**Debug logs.** They include the query parameters of every search; the password and tokens are
+masked:
+```
+LOGURU_LEVEL=DEBUG python3 luxmed_sniper.py
+```
+
+**Trying things out safely.** The notifications are real too. To watch what would be sent
+without sending it, point a copy of the config at the console provider only
+(`notification_provider: [console]`) and pass it with `-c`.
+
+**Notification state** is the file named by `misc.notifydb`, relative to the directory the
+script is started from. It is not shared with the Docker volume, so a local run next to a
+running container announces the same slots a second time.
+
+**Time zone.** The search window starts at today's date on the system clock, so the machine
+should be set to Polish time (`Europe/Warsaw`); the compose file sets it for the container.
+
+**Tests and linting** never touch the network:
+```
+pytest -q
+ruff check .
+```
 
 Running with Docker
 --------------------
