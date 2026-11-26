@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 from loguru import logger
+from pydantic import BaseModel, ValidationError
 
 from .models import Appointment, DoctorLocator, LuxmedSniperError
 
@@ -25,33 +26,101 @@ BROWSER_HEADERS = {  # what the Patient Portal SPA sends
 }
 
 
-def parse_appointments(payload: dict[str, Any], locator: DoctorLocator) -> list[Appointment]:
+class _Doctor(BaseModel):
+    id: int
+    academicTitle: str | None = None
+    firstName: str | None = None
+    lastName: str | None = None
+
+
+class _Term(BaseModel):
+    """One slot as the portal sends it.
+
+    Only what the search cannot work without is required: the time, and the two ids the locator
+    filters on. Everything else merely decorates the notification, and a slot announced with a
+    blank clinic name beats a slot dropped for the lack of one.
+    """
+
+    dateTimeFrom: datetime.datetime
+    clinicGroupId: int
+    doctor: _Doctor
+    clinicId: int | None = None
+    clinic: str = ""
+    serviceId: int | None = None
+
+
+def _where(error: ValidationError) -> str:
+    """Names the offending field and what is wrong with it - never the value, which for a term
+    is a doctor's name and for anything else is whatever the portal chose to send."""
+    first = error.errors(include_input=False, include_url=False)[0]
+    return f"{'.'.join(map(str, first['loc']))}: {first['msg']}"
+
+
+def _raw_terms(payload: Any) -> list[Any]:
+    """Walks the envelope down to the flat list of slots, refusing anything shaped differently.
+
+    A reply without the envelope is not an empty schedule. Read leniently it would be taken for
+    one, and the search would report "nothing free" for as long as the portal kept sending it.
+    """
+    try:
+        days = payload["termsForService"]["termsForDays"]
+        if not isinstance(days, list):
+            raise TypeError
+        raw_terms = []
+        for day in days:
+            if not isinstance(day["terms"], list):
+                raise TypeError
+            raw_terms.extend(day["terms"])
+    except (KeyError, TypeError) as e:
+        err_msg = "Search response has an unexpected shape: no termsForService.termsForDays[].terms"
+        raise LuxmedSniperError(err_msg) from e
+    return raw_terms
+
+
+def parse_appointments(payload: Any, locator: DoctorLocator) -> list[Appointment]:
     """Turns a terms/index payload into appointments, keeping only the doctors and clinics the
     search asked for. Takes the parsed JSON rather than a response, so it can be tested on its
-    own."""
+    own.
+
+    Each slot is validated on its own: one the portal sent malformed is logged and skipped, and
+    the rest are still announced. Only when not a single slot of a non-empty reply can be read
+    is the whole search failed, since that is the portal changing its format rather than one odd
+    record - and a failed search is what reaches the outage alert.
+    """
+    raw_terms = _raw_terms(payload)
+    warsaw = ZoneInfo("Europe/Warsaw")
+
     appointments = []
-    for term_for_day in payload["termsForService"]["termsForDays"]:
-        for term in term_for_day["terms"]:
-            doctor = term["doctor"]
-            clinic_id = int(term["clinicGroupId"])
-            doctor_id = int(doctor["id"])
+    malformed = ""
+    for raw_term in raw_terms:
+        try:
+            term = _Term.model_validate(raw_term)
+        except ValidationError as e:
+            malformed = _where(e)
+            logger.error("Skipping a malformed slot for {}: {}", locator.name, malformed)
+            continue
 
-            if locator.doctor_ids and doctor_id not in locator.doctor_ids:
-                continue
-            if locator.clinic_ids and clinic_id not in locator.clinic_ids:
-                continue
+        doctor = term.doctor
+        if locator.doctor_ids and doctor.id not in locator.doctor_ids:
+            continue
+        if locator.clinic_ids and term.clinicGroupId not in locator.clinic_ids:
+            continue
 
-            appointments.append(
-                Appointment(
-                    datetime.datetime.fromisoformat(term["dateTimeFrom"]).replace(
-                        tzinfo=ZoneInfo("Europe/Warsaw"),
-                    ),
-                    term["clinicId"],
-                    term["clinic"],
-                    f"{doctor['academicTitle']} {doctor['firstName']} {doctor['lastName']}",
-                    term["serviceId"],
-                ),
-            )
+        starts = term.dateTimeFrom
+        appointments.append(
+            Appointment(
+                # The portal sends local wall-clock time without an offset; honour one if it appears.
+                starts.astimezone(warsaw) if starts.tzinfo else starts.replace(tzinfo=warsaw),
+                term.clinicId,
+                term.clinic,
+                " ".join(filter(None, (doctor.academicTitle, doctor.firstName, doctor.lastName))),
+                term.serviceId,
+            ),
+        )
+
+    if malformed and not appointments:
+        err_msg = f"Search response has an unexpected shape: {malformed}"
+        raise LuxmedSniperError(err_msg)
     return appointments
 
 
@@ -135,8 +204,8 @@ class LuxMedPortal:
         """With X-Requested-With (see BROWSER_HEADERS) a rejected session yields a plain 401,
         which is the main path here. The non-JSON check stays as a fallback: without that
         header the portal answers 200 with a login page, so detection keeps working should
-        the portal stop honouring it. Trade-off: any non-JSON reply (a 500 error page, say)
-        is reported as a rejected session too.
+        the portal stop honouring it. Trade-off: any non-JSON 200 is reported as a rejected
+        session too. Error statuses never get this far - `_get` turns them away first.
         """
         if response.status_code in (requests.codes["unauthorized"], requests.codes["forbidden"]):
             return True
@@ -151,6 +220,14 @@ class LuxMedPortal:
         login page reach the JSON parser. One login per cycle means the 10-minute token cannot
         realistically lapse mid-cycle, so there is no retry here - the next cycle logs in anew."""
         response = self._request("GET", url, **kwargs)
+        if response.status_code in (requests.codes["unauthorized"], requests.codes["forbidden"]):
+            err_msg = f"Session rejected by the portal ({response.status_code})"
+            raise LuxmedSniperError(err_msg, response.status_code)
+        if response.status_code != requests.codes["ok"]:
+            # Checked before the body: an error can arrive as perfectly good JSON, and parsing
+            # that would report a missing key instead of the status that explains it.
+            err_msg = f"The portal answered with an error ({response.status_code})"
+            raise LuxmedSniperError(err_msg, response.status_code)
         if LuxMedPortal._is_session_expired(response):
             err_msg = f"Session rejected by the portal ({response.status_code})"
             raise LuxmedSniperError(err_msg, response.status_code)

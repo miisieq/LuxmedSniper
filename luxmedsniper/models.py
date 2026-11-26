@@ -111,10 +111,10 @@ class LocatorSet(typing.NamedTuple):
 @dataclass
 class Appointment:
     AppointmentDate: datetime.datetime
-    clinic_id: int
+    clinic_id: int | None
     ClinicPublicName: str
     DoctorName: str
-    service_id: int
+    service_id: int | None
 
 
 class Luxmed(BaseModel):

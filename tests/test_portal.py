@@ -84,6 +84,89 @@ def test_both_filters_must_match():
     assert found == [], "the right doctor at the wrong clinic is not a match"
 
 
+# --- validating what the portal sent ---------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},
+        {"errors": ["Invalid referral"]},
+        {"termsForService": None},
+        {"termsForService": {}},
+        {"termsForService": {"termsForDays": None}},
+        {"termsForService": {"termsForDays": [{}]}},
+        {"termsForService": {"termsForDays": [{"terms": None}]}},
+        [],
+    ],
+)
+def test_a_reply_without_the_envelope_is_a_failure_not_an_empty_schedule(body):
+    with pytest.raises(LuxmedSniperError, match="unexpected shape"):
+        parse_appointments(body, locator())
+
+
+def test_one_malformed_slot_does_not_cost_the_others(log):
+    broken = {**term(doctor_id=1), "doctor": None}
+
+    found = parse_appointments(payload(term(doctor_id=2), broken, term(doctor_id=3)), locator())
+
+    assert len(found) == 2
+    assert "ERROR|Skipping a malformed slot" in log.getvalue()
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [{"doctor": None}, {"dateTimeFrom": "soon"}, {"clinicGroupId": None}, {"doctor": {"firstName": "Jan"}}],
+)
+def test_a_reply_whose_every_slot_is_malformed_is_a_failure(damage, log):
+    """That is the portal changing its format, and reading it as "nothing free" would hide it."""
+    with pytest.raises(LuxmedSniperError, match="unexpected shape"):
+        parse_appointments(payload({**term(), **damage}, {**term(), **damage}), locator())
+
+
+def test_the_failure_names_the_field_and_never_the_value(log):
+    secretive = {**term(), "dateTimeFrom": "VALUE_THAT_MUST_NOT_LEAK"}
+
+    with pytest.raises(LuxmedSniperError) as raised:
+        parse_appointments(payload(secretive), locator())
+
+    assert "dateTimeFrom" in str(raised.value)
+    assert "VALUE_THAT_MUST_NOT_LEAK" not in str(raised.value) + log.getvalue()
+
+
+def test_a_slot_missing_only_decoration_is_still_announced():
+    """The names and the address make the message nicer; the slot is real without them."""
+    bare = {"dateTimeFrom": "2026-10-09T14:30:00", "clinicGroupId": 1, "doctor": {"id": 67013}}
+
+    [appointment] = parse_appointments(payload(bare), locator())
+
+    assert appointment.DoctorName == ""
+    assert appointment.ClinicPublicName == ""
+
+
+def test_a_doctor_without_a_title_is_not_called_none():
+    untitled = {**term(), "doctor": {**term()["doctor"], "academicTitle": None}}
+
+    [appointment] = parse_appointments(payload(untitled), locator())
+
+    assert appointment.DoctorName == "Jan Kowalski"
+
+
+def test_an_offset_sent_by_the_portal_is_honoured():
+    zulu = {**term(), "dateTimeFrom": "2026-10-09T12:30:00Z"}
+
+    [appointment] = parse_appointments(payload(zulu), locator())
+
+    assert appointment.AppointmentDate.isoformat() == "2026-10-09T14:30:00+02:00"
+
+
+def test_a_time_without_an_offset_is_polish_wall_clock_time(zone_on_another_day):
+    """Wherever the machine happens to be: the clinic's clock is the Polish one."""
+    [appointment] = parse_appointments(payload(term()), locator())
+
+    assert appointment.AppointmentDate.isoformat() == "2026-10-09T14:30:00+02:00"
+
+
 # --- session handling ------------------------------------------------------------------------
 
 
@@ -119,6 +202,25 @@ def test_a_login_page_answered_as_200_is_also_a_rejected_session():
     client, _ = portal_with(FakeResponse("GET", "u", 200, "<html>login</html>", "text/html"))
 
     with pytest.raises(LuxmedSniperError, match="Session rejected"):
+        client._get("https://example.invalid")
+
+
+@pytest.mark.parametrize("status", [400, 500, 503])
+def test_an_error_status_raises_even_when_the_body_is_json(status):
+    """Otherwise the body goes on to the parser and the alert names a missing key, not the
+    status that explains it."""
+    client, _ = portal_with(FakeResponse("GET", "u", status, json.dumps({"message": "nope"})))
+
+    with pytest.raises(LuxmedSniperError, match="answered with an error") as raised:
+        client._get("https://example.invalid")
+
+    assert raised.value.status_code == status
+
+
+def test_an_error_page_is_not_mistaken_for_a_rejected_session():
+    client, _ = portal_with(FakeResponse("GET", "u", 500, "<html>oops</html>", "text/html"))
+
+    with pytest.raises(LuxmedSniperError, match="answered with an error \\(500\\)"):
         client._get("https://example.invalid")
 
 
